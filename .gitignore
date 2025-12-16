@@ -1,0 +1,71 @@
+# =========================
+# Build / Outputs
+# =========================
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+AnyCPU/
+
+# =========================
+# .NET Core / ASP.NET
+# =========================
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+
+# =========================
+# NuGet
+# =========================
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+.nuget/packages/
+
+# =========================
+# Visual Studio
+# =========================
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# =========================
+# Rider / VS Code
+# =========================
+.idea/
+.vscode/
+
+# =========================
+# Configuration locale / secrets
+# =========================
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# =========================
+# IIS / Publish
+# =========================
+*.publishsettings
+publish/
+wwwroot/dist/
+wwwroot/lib/
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
