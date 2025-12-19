@@ -1,0 +1,13 @@
+body, table, input, select, button {
+    background-color: black;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 14px;
+}
+
+table thead th {
+    font-weight: 600;
+}
+
+table tbody td {
+    font-weight: 400;
+}

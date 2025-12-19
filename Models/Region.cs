@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NetTopologySuite.Geometries;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 namespace Avaratra.BackOffice.Models
 {
     public class Region
@@ -18,6 +19,7 @@ namespace Avaratra.BackOffice.Models
         [Column("longitude", TypeName = "decimal(9,6)")]
         public decimal longitude { get; set; }
 
+        [ValidateNever]
         [Column("geometrie", TypeName = "geography")]
         public Point geometrie { get; set; }
 
@@ -26,5 +28,7 @@ namespace Avaratra.BackOffice.Models
 
         [Column("etat")]
         public int etat { get; set; }
+
+        // public string Coordonnees => geometrie != null ? $"({geometrie.X}, {geometrie.Y})" : "";
     }
 }
