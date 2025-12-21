@@ -29,18 +29,31 @@ namespace Avaratra.BackOffice.Pages_Regions
         [BindProperty]
         public List<int> SelectedIds { get; set; } = new();
 
+        // recherche avancée 
+        [BindProperty(SupportsGet = true)]
+        public string? SearchIntitule { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? MinPopulation { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? MaxPopulation { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? Etat { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public decimal? Latitude { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public decimal? Longitude { get; set; }
+
+
+
         public IndexModel(Avaratra.BackOffice.Data.ApplicationDbContext context)
         {
             _context = context;
         }
-
-        // public async Task OnGetAsync()
-        // {
-        //     if (_context.Region != null)
-        //     {
-        //         Regions = await _context.Region.ToListAsync();
-        //     }
-        // }
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
@@ -63,17 +76,29 @@ namespace Avaratra.BackOffice.Pages_Regions
         {
             if (id == null)
             {
-                int pageSize = 5; // nombre d’éléments par page
-                var regionsQuery = _context.Region.OrderBy(r => r.intitule);
-                Regions = await PaginatedList<Region>.CreateAsync(regionsQuery, pageIndex ?? 1, pageSize);
+            const int pageSize = 5;
+            var query = _context.Region.AsQueryable();
+                if (!string.IsNullOrWhiteSpace(SearchIntitule))
+                    query = query.Where(r => r.intitule.Contains(SearchIntitule));
+                if (MinPopulation.HasValue)
+                    query = query.Where(r => r.totalPopulationRegion >= MinPopulation.Value);
+                if (MaxPopulation.HasValue)
+                    query = query.Where(r => r.totalPopulationRegion <= MaxPopulation.Value);
+                if (Etat.HasValue)
+                    query = query.Where(r => r.etat == Etat.Value);
+                if (Latitude.HasValue)
+                    query = query.Where(r => r.latitude == Latitude.Value);
+                if (Longitude.HasValue)
+                    query = query.Where(r => r.longitude == Longitude.Value);
+                query = query.OrderBy(r => r.intitule);
+
+                Regions = await PaginatedList<Region>.CreateAsync(query, pageIndex ?? 1, pageSize);
                 return Page();
             }
-            // Mode détail
+            // Mode détails
             var region = await _context.Region.FirstOrDefaultAsync(m => m.idRegion == id);
-            if (region == null)
-            {
-                return NotFound();
-            }
+            if (region == null) return NotFound();
+
             Region = region;
             return Page();
         }
@@ -89,7 +114,7 @@ namespace Avaratra.BackOffice.Pages_Regions
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
         }
-        
+
         public async Task<IActionResult> OnPostDeleteAsync(int? id)
         {
             var region = await _context.Region.FindAsync(id);
