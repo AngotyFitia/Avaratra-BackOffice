@@ -18,10 +18,11 @@
         <button type="button" class="btn btn-inverse-success btn-fw" id="btnImportCsv">
             <i class="mdi mdi-file-import"></i> Import csv
         </button>
-        <a asp-page="Create" class="btn btn-inverse-primary btn-fw" data-bs-toggle="modal" data-bs-target="#createModal"><i class="icon-plus"></i> Nouvelle région</a>
+        <a asp-page="Create" class="btn btn-inverse-primary btn-fw" data-bs-toggle="modal" data-bs-target="#createModal">
+            <i class="icon-plus"></i> Nouvelle région
+        </a>
     </div>
 </div>
-@if (Model.Regions != null && Model.Regions.Any()){
 
 <form method="get" class="mb-4">
     <div class="row g-2 align-items-center">
@@ -55,9 +56,14 @@
     </div>
 </form>
 <hr />
+
 <div class="d-flex justify-content-end mb-2 gap-2">
-    <button type="button" class="btn btn-inverse-danger btn-fw" id="deleteAllBtn" >Tout supprimer</button>
-    <button type="button" class="btn btn-inverse-success btn-fw" id="validateAllBtn" >Valider tout</button>
+    <button type="button" class="btn btn-inverse-danger btn-fw" id="deleteAllBtn" >
+        Tout supprimer
+    </button>
+    <button type="button" class="btn btn-inverse-success btn-fw" id="validateAllBtn" >
+        Valider tout
+    </button>
 </div>
 
 <table class="table table-hover align-middle" >
@@ -74,7 +80,8 @@
         </tr>
     </thead>
     <tbody>
-        
+        @if (Model.Regions != null && Model.Regions.Any()){
+
             @foreach (var item in Model.Regions)
             {
                 <tr>
@@ -94,7 +101,11 @@
                     </td>
                 </tr>
             }
-       
+        }
+        else
+        {
+            <p>Aucune région trouvée.</p>
+        }
     </tbody>
 </table>
 
@@ -112,9 +123,6 @@
     </ul>
 </nav>
 
-}else { <p class="text-center text-muted fw-bold mt-3">
-    <i class="mdi mdi-alert-circle-outline"></i> Aucune région trouvée
-</p> }
 <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -225,9 +233,97 @@
   </div>
 </div>
 
+<script>
+    document.getElementById('btnImportCsv').addEventListener('click', function () {
+        document.getElementById('csvFileInput').click();
+    });
 
+    document.getElementById('csvFileInput').addEventListener('change', function (event) {
+        const file = event.target.files[0];
+        if (file) {
+            console.log("Fichier choisi :", file.name);
+        }
+});
+</script>
+
+<script>
+    // localisation avec point google maps
+    var map, marker;
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), { center: { lat: 0, lng: 0 }, zoom: 2});
+        map.addListener('click', function(e) {
+        placeMarker(e.latLng);
+        });
+    }
+
+    function placeMarker(location) {
+        if (marker) marker.setPosition(location);
+        else marker = new google.maps.Marker({ position: location, map: map });
+
+        document.getElementById('Region_latitude').value = location.lat();
+        document.getElementById('Region_longitude').value = location.lng();
+    }
+
+    // position actuelle
+    document.getElementById("btnGetLocation").addEventListener("click", function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                document.getElementById("Region_latitude").value = position.coords.latitude;
+                document.getElementById("Region_longitude").value = position.coords.longitude;
+            }, function(error) {
+                alert("Impossible de récupérer la position : " + error.message);
+            });
+        } else {
+            alert("La géolocalisation n'est pas supportée par votre navigateur.");
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+    var editModal = document.getElementById('editModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+
+            // Récupérer les valeurs
+            var id = button.getAttribute('data-id');
+            var name = button.getAttribute('data-name');
+            var lat = button.getAttribute('data-lat');
+            var lng = button.getAttribute('data-lng');
+            var pop = button.getAttribute('data-pop');
+            var etat = button.getAttribute('data-etat');
+
+            // Injecter dans les champs
+            editModal.querySelector('#regionId').value = id;
+            editModal.querySelector('#regionName').value = name;
+            editModal.querySelector('#regionLat').value = lat;
+            editModal.querySelector('#regionLng').value = lng;
+            editModal.querySelector('#regionPop').value = pop;
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+    var deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var id = button.getAttribute('data-id');
+            var name = button.getAttribute('data-name');
+            deleteModal.querySelector('#regionId').value = id;
+            deleteModal.querySelector('#regionName').textContent = name;
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+    var validateModal = document.getElementById('validateModal');
+    validateModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var id = button.getAttribute('data-id');
+        var name = button.getAttribute('data-name');
+
+        validateModal.querySelector('#regionId').value = id;
+        validateModal.querySelector('#regionName').textContent = name;
+    });
+});
+</script>
 @section Scripts {
-    <script src="~/assets/js/personal/region.js"></script>
     <script>
         $(document).ready(function () {
             var showModal = '@ViewData["ShowCreateModal"]';

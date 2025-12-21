@@ -1,6 +1,11 @@
 using Avaratra.BackOffice.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 var builder = WebApplication.CreateBuilder(args);
+
+var cultureInfo = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Add services to the container.
 builder.Services.AddRazorPages();
