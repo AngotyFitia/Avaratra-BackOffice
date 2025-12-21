@@ -1,14 +1,13 @@
 
 // Import CSV
-document.getElementById('btnImportCsv').addEventListener('click', function () {
+document.getElementById('btnImportCsv').addEventListener('click', function (e) {
+    e.preventDefault(); // empêche le submit direct
     document.getElementById('csvFileInput').click();
 });
 
-document.getElementById('csvFileInput').addEventListener('change', function (event) {
-    const file = event.target.files[0];
-    if (file) {
-        console.log("Fichier choisi :", file.name);
-    }
+document.getElementById('csvFileInput').addEventListener('change', function () {
+    // une fois le fichier choisi, soumettre le formulaire
+    this.form.submit();
 });
 
 // Google Maps localisation
