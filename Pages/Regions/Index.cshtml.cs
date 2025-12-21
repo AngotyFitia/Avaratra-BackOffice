@@ -14,13 +14,14 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Avaratra.BackOffice.Utils;
 
 namespace Avaratra.BackOffice.Pages_Regions
 {
     public class IndexModel : PageModel
     {
         private readonly Avaratra.BackOffice.Data.ApplicationDbContext _context;
-        public IList<Region> Regions { get;set; } = default!; // tableau de region
+        public PaginatedList<Region> Regions { get; set; } = default!;
 
         [BindProperty]
         public Region Region { get; set; } = default!; //une seule region
@@ -55,15 +56,16 @@ namespace Avaratra.BackOffice.Pages_Regions
             Region.etat = 0;
             _context.Region.Add(Region);
             await _context.SaveChangesAsync();
-
             return RedirectToPage("./Index");
         }
 
-        public async Task<IActionResult> OnGetAsync(int? id)
+        public async Task<IActionResult> OnGetAsync(int? id, int? pageIndex)
         {
             if (id == null)
             {
-                Regions = await _context.Region.ToListAsync();
+                int pageSize = 5; // nombre d’éléments par page
+                var regionsQuery = _context.Region.OrderBy(r => r.intitule);
+                Regions = await PaginatedList<Region>.CreateAsync(regionsQuery, pageIndex ?? 1, pageSize);
                 return Page();
             }
             // Mode détail
@@ -80,16 +82,14 @@ namespace Avaratra.BackOffice.Pages_Regions
         {   
             var regionDb = await _context.Region.FindAsync(Region.idRegion);
             if (regionDb == null) return NotFound();
-
             regionDb.intitule = Region.intitule;
             regionDb.latitude = Region.latitude;
             regionDb.longitude = Region.longitude;
             regionDb.totalPopulationRegion=Region.totalPopulationRegion;
-
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
         }
-
+        
         public async Task<IActionResult> OnPostDeleteAsync(int? id)
         {
             var region = await _context.Region.FindAsync(id);
