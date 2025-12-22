@@ -1,3 +1,13 @@
+document.getElementById('btnImportCsv').addEventListener('click', function (e) {
+    e.preventDefault(); 
+    document.getElementById('csvFileInput').click();
+});
+
+document.getElementById('csvFileInput').addEventListener('change', function () {
+    this.form.submit();
+});
+
+
 var map, marker;
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
