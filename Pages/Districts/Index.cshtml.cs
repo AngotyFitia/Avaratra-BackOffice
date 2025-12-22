@@ -10,7 +10,9 @@ using Avaratra.BackOffice.Models;
 using Avaratra.BackOffice.Utils;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
-
+using System.IO;
+using System.Text;
+using System.Globalization;
 
 namespace Avaratra.BackOffice.Pages_Districts
 {
@@ -137,6 +139,68 @@ namespace Avaratra.BackOffice.Pages_Districts
             return RedirectToPage("./Index");
         }
 
+        public async Task<IActionResult> OnPostImportCsvAsync(IFormFile csvFile)
+        {
+            if (csvFile == null || csvFile.Length == 0)
+            {
+                ModelState.AddModelError(string.Empty, "Aucun fichier sélectionné.");
+                return Page();
+            }
+
+            using var reader = new StreamReader(csvFile.OpenReadStream(), Encoding.UTF8);
+
+            var header = await reader.ReadLineAsync();
+            Console.WriteLine($"Header ignoré: {header}");
+
+            var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+
+            while (!reader.EndOfStream)
+            {
+                var line = await reader.ReadLineAsync();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                var values = line.Split(',');
+                if (values.Length < 6) continue;
+
+                var districtName = values[0].Trim();
+                var regionName   = values[1].Trim();
+                var longitude    = decimal.Parse(values[2].Trim(), CultureInfo.InvariantCulture);
+                var latitude     = decimal.Parse(values[3].Trim(), CultureInfo.InvariantCulture);
+                var population   = int.Parse(values[4].Trim(), CultureInfo.InvariantCulture);
+                var etat         = int.Parse(values[5].Trim(), CultureInfo.InvariantCulture);
+
+                // Chercher la région existante
+                var region = await _context.Region.FirstOrDefaultAsync(r => r.intitule == regionName);
+                if (region == null)
+                {
+                    // Si la région n’existe pas, on peut ignorer ou lever une erreur
+                    Console.WriteLine($"Région '{regionName}' introuvable, district '{districtName}' ignoré.");
+                    continue;
+                }
+
+                // Vérifier si le district existe déjà
+                bool existsDistrict = await _context.District.AnyAsync(d => d.intitule == districtName && d.IdRegion == region.idRegion);
+                if (!existsDistrict)
+                {
+                    var district = new District
+                    {
+                        intitule = districtName,
+                        IdRegion = region.idRegion,
+                        latitude = latitude,
+                        longitude = longitude,
+                        totalPopulationDistrict = population,
+                        etat = etat,
+                        geometrie = geometryFactory.CreatePoint(new Coordinate((double)longitude, (double)latitude))
+                    };
+
+                    _context.District.Add(district);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            TempData["Message"] = "Import des districts terminé avec succès.";
+            return RedirectToPage();
+        }
         
     }
 }
