@@ -16,17 +16,17 @@ namespace Avaratra.BackOffice.Pages_Districts
 {
     public class IndexModel : PageModel
     {
-        private readonly Avaratra.BackOffice.Data.ApplicationDbContext _context;
-        public PaginatedList<District> Districts { get; set; } = default!;
-        public List<Region> RegionsValidees { get; set; } = new();
-
-        [BindProperty]
-        public District District { get; set; } = default!;
-
         public IndexModel(Avaratra.BackOffice.Data.ApplicationDbContext context)
         {
             _context = context;
         }
+
+        private readonly Avaratra.BackOffice.Data.ApplicationDbContext _context;
+        public PaginatedList<District> Districts { get; set; } = default!;
+        public List<Region> RegionsValidees { get; set; } = new();
+        
+        [BindProperty]
+        public District District { get; set; } = default!;
 
         [BindProperty(SupportsGet = true)]
         public string? SearchIntitule { get; set; }
@@ -43,20 +43,37 @@ namespace Avaratra.BackOffice.Pages_Districts
         [BindProperty(SupportsGet = true)]
         public int? Etat { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(int? pageIndex)
+        public async Task<IActionResult> OnGetAsync(int? id, int? pageIndex)
         {
-            const int pageSize = 10;
-            // Récupération des districts avec leur région
-            var queryDistricts = _context.District
-                                        .Include(d => d.Region)
-                                        .OrderBy(d => d.intitule);
-            Districts = await PaginatedList<District>.CreateAsync(queryDistricts, pageIndex ?? 1, pageSize);
+            if (id == null)
+            {
+            const int pageSize = 2;
+            var query = _context.District
+                                .Include(d => d.Region)   // jointure
+                                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(SearchIntitule))
+                query = query.Where(r => r.intitule.Contains(SearchIntitule));
+            if (!string.IsNullOrWhiteSpace(SearchRegion))
+                query = query.Where(r => r.Region.intitule.Contains(SearchRegion));
+            if (MinPopulation.HasValue)
+                query = query.Where(r => r.totalPopulationDistrict >= MinPopulation.Value);
+            if (MaxPopulation.HasValue)
+                query = query.Where(r => r.totalPopulationDistrict <= MaxPopulation.Value);
+            if (Etat.HasValue)
+                query = query.Where(r => r.etat == Etat.Value);
+            query = query.OrderBy(r => r.intitule);
+            Districts = await PaginatedList<District>.CreateAsync(query, pageIndex ?? 1, pageSize);
 
             // Récupération des régions validées
             RegionsValidees = await _context.Region
                                             .Where(r => r.etat == 5)
                                             .OrderBy(r => r.intitule)
                                             .ToListAsync();
+            }
+            var ditrict = await _context.District.FirstOrDefaultAsync(m => m.idDistrict == id);
+
+            District= ditrict;
             return Page();
         }
 
@@ -77,5 +94,40 @@ namespace Avaratra.BackOffice.Pages_Districts
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
         }
+
+        public async Task<IActionResult> OnPostUpdateAsync()
+        {   
+            var districtDb = await _context.District.FindAsync(District.idDistrict);
+            if (districtDb == null) return NotFound();
+            districtDb.intitule = District.intitule;
+            districtDb.IdRegion = District.IdRegion;
+            districtDb.totalPopulationDistrict=District.totalPopulationDistrict;
+            await _context.SaveChangesAsync();
+            return RedirectToPage("./Index");
+        }
+
+        public async Task<IActionResult> OnPostDeleteAsync(int? id)
+        {
+            var district = await _context.District.FindAsync(id);
+            if (district != null)
+            {
+                District = district;
+                _context.District.Remove(District);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToPage("./Index");
+        }
+
+        public async Task<IActionResult> OnPostValidateAsync(int? id)
+        {
+            var districtDb = await _context.District.FindAsync(id);
+            if (districtDb == null) return NotFound();
+
+            districtDb.etat = 5;
+            await _context.SaveChangesAsync();
+            return RedirectToPage("./Index");
+        }
+
+        
     }
 }
