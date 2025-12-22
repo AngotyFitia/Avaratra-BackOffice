@@ -48,8 +48,6 @@ namespace Avaratra.BackOffice.Pages_Regions
         [BindProperty(SupportsGet = true)]
         public decimal? Longitude { get; set; }
 
-
-
         public IndexModel(Avaratra.BackOffice.Data.ApplicationDbContext context)
         {
             _context = context;
@@ -205,6 +203,11 @@ namespace Avaratra.BackOffice.Pages_Regions
             await _context.SaveChangesAsync();
             TempData["Message"] = "Import terminé avec succès.";
             return RedirectToPage();
+        }
+
+        public async Task<List<Region>> GetRegionsValideesAsync() { 
+            return await _context.Region 
+                .Where(r => r.etat == 5) .OrderBy(r => r.intitule) .ToListAsync(); 
         }
     }
     

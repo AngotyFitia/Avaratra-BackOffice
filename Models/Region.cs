@@ -8,6 +8,7 @@ namespace Avaratra.BackOffice.Models
     {
         [Key]
         [Column("id_region")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idRegion { get; set; }
 
         [Column("intitule", TypeName = "varchar(255)")]
