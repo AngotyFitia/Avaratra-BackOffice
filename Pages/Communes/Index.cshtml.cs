@@ -101,7 +101,6 @@ namespace Avaratra.BackOffice.Pages_Communes
             return RedirectToPage("./Index");
         }
 
-
         public async Task<IActionResult> OnPostUpdateAsync()
         {   
             var communeDb = await _context.Commune.FindAsync(Commune.idCommune);
@@ -127,12 +126,26 @@ namespace Avaratra.BackOffice.Pages_Communes
 
         public async Task<IActionResult> OnPostValidateAsync(int? id)
         {
-            var communeDb = await _context.Commune.FindAsync(id);
-            if (communeDb == null) return NotFound();
+            var communeDb = await _context.Commune
+                .Include(c => c.District)
+                .FirstOrDefaultAsync(c => c.idCommune == id);
+
+            if (communeDb.District != null)
+            {
+                Console.WriteLine($"Avant: {communeDb.District.totalPopulationDistrict}");
+                communeDb.District.totalPopulationDistrict += communeDb.nombrePopulation;
+                Console.WriteLine($"Après: {communeDb.District.totalPopulationDistrict}");
+            }
 
             communeDb.etat = 5;
+            if (communeDb.District != null)
+            {
+                communeDb.District.totalPopulationDistrict += communeDb.nombrePopulation;
+            }
+
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
         }
+
     }
 }

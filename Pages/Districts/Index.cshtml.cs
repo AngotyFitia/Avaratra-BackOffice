@@ -17,7 +17,7 @@ namespace Avaratra.BackOffice.Pages_Districts
     public class IndexModel : PageModel
     {
         private readonly Avaratra.BackOffice.Data.ApplicationDbContext _context;
-        
+
         public IndexModel(Avaratra.BackOffice.Data.ApplicationDbContext context)
         {
             _context = context;
@@ -121,10 +121,18 @@ namespace Avaratra.BackOffice.Pages_Districts
 
         public async Task<IActionResult> OnPostValidateAsync(int? id)
         {
-            var districtDb = await _context.District.FindAsync(id);
+            var districtDb = await _context.District
+                .Include(d => d.Region) 
+                .FirstOrDefaultAsync(d => d.idDistrict == id);
+
             if (districtDb == null) return NotFound();
 
             districtDb.etat = 5;
+            if (districtDb.Region != null)
+            {
+                districtDb.Region.totalPopulationRegion += districtDb.totalPopulationDistrict;
+            }
+
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
         }
