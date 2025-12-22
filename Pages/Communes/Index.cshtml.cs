@@ -11,29 +11,30 @@ using Avaratra.BackOffice.Utils;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
 
-
-namespace Avaratra.BackOffice.Pages_Districts
+namespace Avaratra.BackOffice.Pages_Communes
 {
     public class IndexModel : PageModel
     {
         private readonly Avaratra.BackOffice.Data.ApplicationDbContext _context;
-        
+
         public IndexModel(Avaratra.BackOffice.Data.ApplicationDbContext context)
         {
             _context = context;
         }
+        public PaginatedList<Commune> Communes { get; set; } = default!;
+        public List<District> DistrictsValides { get; set; } = new();
 
-        public PaginatedList<District> Districts { get; set; } = default!;
-        public List<Region> RegionsValidees { get; set; } = new();
-        
         [BindProperty]
-        public District District { get; set; } = default!;
+        public Commune Commune { get; set; } = default!;
 
         [BindProperty(SupportsGet = true)]
         public string? SearchIntitule { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public string? SearchRegion { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? SearchDistrict { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public int? MinPopulation { get; set; }
@@ -49,71 +50,76 @@ namespace Avaratra.BackOffice.Pages_Districts
             if (id == null)
             {
             const int pageSize = 2;
-            var query = _context.District
-                                .Include(d => d.Region)   // jointure
-                                .AsQueryable();
-
+            var query = _context.Commune.Include(c => c.District).ThenInclude(d => d.Region).AsQueryable();
             if (!string.IsNullOrWhiteSpace(SearchIntitule))
-                query = query.Where(r => r.intitule.Contains(SearchIntitule));
+            query = query.Where(c => c.intitule.Contains(SearchIntitule));
             if (!string.IsNullOrWhiteSpace(SearchRegion))
-                query = query.Where(r => r.Region.intitule.Contains(SearchRegion));
+                query = query.Where(c => c.District.Region.intitule.Contains(SearchRegion));
+
+            if (!string.IsNullOrWhiteSpace(SearchDistrict))
+                query = query.Where(c => c.District.intitule.Contains(SearchDistrict));
+
             if (MinPopulation.HasValue)
-                query = query.Where(r => r.totalPopulationDistrict >= MinPopulation.Value);
+                query = query.Where(c => c.nombrePopulation >= MinPopulation.Value);
+
             if (MaxPopulation.HasValue)
-                query = query.Where(r => r.totalPopulationDistrict <= MaxPopulation.Value);
+                query = query.Where(c => c.nombrePopulation <= MaxPopulation.Value);
+
             if (Etat.HasValue)
-                query = query.Where(r => r.etat == Etat.Value);
+                query = query.Where(c => c.etat == Etat.Value);
+
             query = query.OrderBy(r => r.intitule);
-            Districts = await PaginatedList<District>.CreateAsync(query, pageIndex ?? 1, pageSize);
+            Communes = await PaginatedList<Commune>.CreateAsync(query, pageIndex ?? 1, pageSize);
 
             // Récupération des régions validées
-            RegionsValidees = await _context.Region
+            DistrictsValides = await _context.District
                                             .Where(r => r.etat == 5)
                                             .OrderBy(r => r.intitule)
                                             .ToListAsync();
             }
-            var ditrict = await _context.District.FirstOrDefaultAsync(m => m.idDistrict == id);
+            var commune = await _context.Commune.FirstOrDefaultAsync(m => m.idCommune == id);
 
-            District= ditrict;
+            Commune= commune;
             return Page();
         }
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            Console.WriteLine(District.IdRegion);
-            District.latitude = Convert.ToDecimal(Request.Form["District.latitude"], System.Globalization.CultureInfo.InvariantCulture);
-            District.longitude = Convert.ToDecimal(Request.Form["District.longitude"], System.Globalization.CultureInfo.InvariantCulture);
+            Console.WriteLine(Commune.IdDistrict);
+            Commune.latitude = Convert.ToDecimal(Request.Form["Commune.latitude"], System.Globalization.CultureInfo.InvariantCulture);
+            Commune.longitude = Convert.ToDecimal(Request.Form["Commune.longitude"], System.Globalization.CultureInfo.InvariantCulture);
 
             if (!ModelState.IsValid){
                 ViewData["ShowCreateModal"] = true;
                 return Page();
             }
             var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-            District.geometrie = geometryFactory.CreatePoint(new Coordinate((double)District.longitude, (double)District.latitude));
-            District.etat = 0;
-            _context.District.Add(District);
+            Commune.geometrie = geometryFactory.CreatePoint(new Coordinate((double)Commune.longitude, (double)Commune.latitude));
+            Commune.etat = 0;
+            _context.Commune.Add(Commune);
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
         }
 
+
         public async Task<IActionResult> OnPostUpdateAsync()
         {   
-            var districtDb = await _context.District.FindAsync(District.idDistrict);
-            if (districtDb == null) return NotFound();
-            districtDb.intitule = District.intitule;
-            districtDb.IdRegion = District.IdRegion;
-            districtDb.totalPopulationDistrict=District.totalPopulationDistrict;
+            var communeDb = await _context.Commune.FindAsync(Commune.idCommune);
+            if (communeDb == null) return NotFound();
+            communeDb.intitule = Commune.intitule;
+            communeDb.IdDistrict = Commune.IdDistrict;
+            communeDb.nombrePopulation=Commune.nombrePopulation;
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int? id)
         {
-            var district = await _context.District.FindAsync(id);
-            if (district != null)
+            var commune = await _context.Commune.FindAsync(id);
+            if (commune != null)
             {
-                District = district;
-                _context.District.Remove(District);
+                Commune = commune;
+                _context.Commune.Remove(Commune);
                 await _context.SaveChangesAsync();
             }
             return RedirectToPage("./Index");
@@ -121,14 +127,12 @@ namespace Avaratra.BackOffice.Pages_Districts
 
         public async Task<IActionResult> OnPostValidateAsync(int? id)
         {
-            var districtDb = await _context.District.FindAsync(id);
-            if (districtDb == null) return NotFound();
+            var communeDb = await _context.Commune.FindAsync(id);
+            if (communeDb == null) return NotFound();
 
-            districtDb.etat = 5;
+            communeDb.etat = 5;
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
         }
-
-        
     }
 }

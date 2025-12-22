@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NetTopologySuite.Geometries;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+
 namespace Avaratra.BackOffice.Models
 {
     public class Commune
@@ -8,9 +10,13 @@ namespace Avaratra.BackOffice.Models
         [Key]
         [Column("id_commune")]
         public int idCommune { get; set; }
+        
+        [Column("id_district")] 
+        public int IdDistrict { get; set; }
 
-        [ForeignKey("id_district")]
-        public District district {get; set;}
+        [ValidateNever]
+        [ForeignKey("IdDistrict")]
+        public District District {get; set;}
 
         [Column("intitule", TypeName = "varchar(255)")]
         public string intitule { get; set; } = string.Empty;
@@ -21,6 +27,7 @@ namespace Avaratra.BackOffice.Models
         [Column("longitude", TypeName = "decimal(9,6)")]
         public decimal longitude { get; set; }
 
+        [ValidateNever]
         [Column("geometrie", TypeName = "geography")]
         public Point geometrie { get; set; }
 

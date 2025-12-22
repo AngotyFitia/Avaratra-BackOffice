@@ -36,9 +36,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (editModal) {
         editModal.addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
-            editModal.querySelector('#regionId').value = button.getAttribute('data-id');
-            editModal.querySelector('#regionName').value = button.getAttribute('data-name');
-            editModal.querySelector('#regionPop').value = button.getAttribute('data-pop');
+            editModal.querySelector('#districtId').value = button.getAttribute('data-id');
+            editModal.querySelector('#districtName').value = button.getAttribute('data-name');
+            editModal.querySelector('#districtPop').value = button.getAttribute('data-pop');
 
             // Sélectionner la région actuelle
             var regionSelect = editModal.querySelector('#regionList');
@@ -53,8 +53,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (deleteModal) {
         deleteModal.addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
-            deleteModal.querySelector('#regionId').value = button.getAttribute('data-id');
-            deleteModal.querySelector('#regionName').textContent = button.getAttribute('data-name');
+            deleteModal.querySelector('#districtId').value = button.getAttribute('data-id');
+            deleteModal.querySelector('#districtName').textContent = button.getAttribute('data-name');
         });
     }
 
@@ -62,8 +62,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (validateModal) {
         validateModal.addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
-            validateModal.querySelector('#regionId').value = button.getAttribute('data-id');
-            validateModal.querySelector('#regionName').textContent = button.getAttribute('data-name');
+            validateModal.querySelector('#districtId').value = button.getAttribute('data-id');
+            validateModal.querySelector('#districtName').textContent = button.getAttribute('data-name');
         });
     }
 });
