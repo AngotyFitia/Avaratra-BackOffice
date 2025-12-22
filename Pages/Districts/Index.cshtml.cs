@@ -146,7 +146,6 @@ namespace Avaratra.BackOffice.Pages_Districts
                 ModelState.AddModelError(string.Empty, "Aucun fichier sélectionné.");
                 return Page();
             }
-
             using var reader = new StreamReader(csvFile.OpenReadStream(), Encoding.UTF8);
 
             var header = await reader.ReadLineAsync();
