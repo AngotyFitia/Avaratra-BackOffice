@@ -1,0 +1,15 @@
+/* body.login-page {
+    background: url('@ViewData["BackgroundImage"]') no-repeat center center fixed; */
+
+.content-wrapper{
+    background-image: url('/assets/images/background.png'); 
+    background-repeat: no-repeat; 
+    background-position: center center; 
+    background-attachment: fixed; 
+    background-size: cover;
+}
+.auth-form-light{
+    background-color:white; 
+    opacity: 0.8;
+    border-radius: 10px;
+}
