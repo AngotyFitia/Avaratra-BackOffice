@@ -1,12 +1,41 @@
 /* body.login-page {
     background: url('@ViewData["BackgroundImage"]') no-repeat center center fixed; */
+.login-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
 
+.animated-text {
+    /* font-weight: bold; */
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: white;
+    animation: fadeInDown 2s ease-in-out;
+}
+
+/* .animated-sub {
+    font-size: 16px;
+    font-style: italic;
+    animation: fadeInUp 2s ease-in-out;
+} */
+
+/* Animations */
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+    
 .content-wrapper{
-    background-image: url('/assets/images/background.png'); 
+    background-image: url('/assets/images/tele2.jpg'); 
     background-repeat: no-repeat; 
     background-position: center center; 
     background-attachment: fixed; 
-    background-size: cover;
+    background-size: 100% 100%
 }
 .auth-form-light{
     background-color:white; 
