@@ -1,4 +1,17 @@
-﻿<!DOCTYPE html>
+﻿@using System.Text.Json
+@using Avaratra.BackOffice.Models
+
+@{
+    var userClaim = User.FindFirst("UserData")?.Value;
+    Utilisateur currentUser = null;
+
+    if (!string.IsNullOrEmpty(userClaim))
+    {
+        currentUser = JsonSerializer.Deserialize<Utilisateur>(userClaim);
+    }
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -106,12 +119,14 @@
         <!-- partial:partials/_sidebar.html -->
             <nav class="sidebar sidebar-offcanvas" id="sidebar">
                 <ul class="nav">
+                @if (currentUser?.IdProfil != 1){
                     <li class="nav-item">
                     <a class="nav-link" href="index.html">
                         <i class="icon-grid menu-icon"></i>
                         <span class="menu-title">Dashboard</span>
                     </a>
                     </li>
+                }
                     <li class="nav-item">
                     <a class="nav-link" data-bs-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
                         <i class="icon-layout menu-icon"></i>

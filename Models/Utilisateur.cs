@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NetTopologySuite.Geometries;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+
 namespace Avaratra.BackOffice.Models
 {
     public class Utilisateur
@@ -8,12 +10,20 @@ namespace Avaratra.BackOffice.Models
         [Key]
         [Column("id_utilisateur")]
         public int idUtilisateur { get; set; }
+        
+        [Column("id_profil")] 
+        public int IdProfil { get; set; }
 
-        [ForeignKey("id_profil")]
-        public Profil profil {get; set;}
+        [ValidateNever]
+        [ForeignKey("IdProfil")]
+        public Profil Profil {get; set;}
 
-        [ForeignKey("id_commune")]
-        public Commune commune {get; set;}
+        [Column("id_commune")] 
+        public int IdCommune { get; set; }
+
+        [ValidateNever]
+        [ForeignKey("IdCommune")]
+        public Commune Commune {get; set;}
 
         [Column("nom", TypeName = "varchar(255)")]
         public string nom { get; set; } = string.Empty;
