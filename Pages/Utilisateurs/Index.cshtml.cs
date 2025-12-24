@@ -71,5 +71,10 @@ namespace Avaratra.BackOffice.Pages_Utilisateurs
             TempData["ErrorMessage"] = "Email ou mot de passe incorrect.";
             return RedirectToPage("/Utilisateurs/Index");
         }
+
+        public async Task<IActionResult> OnGetLogoutAsync() { 
+            await HttpContext.SignOutAsync();
+            return RedirectToPage("/Utilisateurs/Index");
+        }
     }
 }
