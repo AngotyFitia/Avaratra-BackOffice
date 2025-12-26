@@ -1,0 +1,193 @@
+@page
+@model Avaratra.BackOffice.Pages_Admin_Unites.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-1">Unités</h3>
+        <small class="text-muted">Gestion et recherche des Unités</small>
+    </div>
+    <div class="d-flex gap-2">
+    <form method="post" enctype="multipart/form-data" asp-page-handler="ImportCsv">
+        <input type="file" id="csvFileInput" name="csvFile" accept=".csv" style="display:none" />
+        <button type="submit" class="btn btn-inverse-success btn-fw" id="btnImportCsv"><i class="mdi mdi-file-import"></i> Import excel</button>
+        <a asp-page="Create" class="btn btn-inverse-primary btn-fw" data-bs-toggle="modal" data-bs-target="#createModal"><i class="icon-plus"></i> Nouvelle unité</a>
+    </form>
+    </div>
+</div>
+
+<form method="get" class="mb-4">
+  <div class="row g-2 align-items-center">
+    <div class="col-md-2">
+      <input type="text" class="form-control form-control-sm" placeholder="Unités" name="SearchUnity" >
+    </div>
+    <div class="col-md-2">
+      <select class="form-select form-select-sm" name="Etat">
+        <option value="">État</option>
+        <option value="0" selected="@(Model.Etat == 0)">Non validé</option>
+        <option value="5" selected="@(Model.Etat == 5)">Validé</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+      <button type="submit" class="btn btn-inverse-secondary btn-fw w-100">
+        <i class="icon-search"></i>
+      </button>
+    </div>
+  </div>
+</form>
+
+<hr />
+
+@if (Model.Unites != null && Model.Unites.Any()){
+<div class="d-flex justify-content-end mb-2 gap-2">
+    <button type="button" class="btn btn-inverse-danger btn-fw" id="deleteAllBtn" >Tout supprimer</button>
+    <button type="button" class="btn btn-inverse-success btn-fw" id="validateAllBtn" >Valider tout</button>
+</div>
+
+<table class="table table-hover align-middle" >
+    <thead class="table-light">
+        <tr>
+            <th scope="col" class="text-center"> <input type="checkbox" id="selectAll"></th>
+            <th class="text-center">Intitule</th>
+            <th class="text-center">Etat</th>
+            <th class="text-center">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Unites)
+        {
+            <tr>
+                <td class="text-center"><input type="checkbox" class="rowCheckbox" data-id="@item.idUnite"/></td>
+                <td class="text-center">@item.symbole</td>
+                <td class="text-center">@item.etat</td>
+                <td class="text-center">
+                <button type="button" class="btn btn-inverse-warning btn-xs custom-width"  data-bs-toggle="modal"  data-bs-target="#editModal" data-id="@item.idUnite" data-name="@item.symbole"><i class="mdi mdi-pen"></i></button>
+                <button type="button" class="btn btn-inverse-danger btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idUnite" data-name="@item.symbole"><i class="mdi mdi-delete"></i></button>
+                <button type="button" class="btn btn-inverse-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#validateModal" data-id="@item.idUnite" data-name="@item.symbole"><i class="mdi mdi-check"></i></button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<nav aria-label="Page navigation example" class="mt-3">
+    <ul class="pagination justify-content-end">
+        @if (Model.Unites.HasPreviousPage)
+        {
+            <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Unites.PageIndex - 1)">Précédent</a></li>
+        }
+        @if (Model.Unites.HasNextPage)
+        {
+            <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Unites.PageIndex + 1)">Suivant</a></li>
+        }
+    </ul>
+</nav>
+}else { 
+    <p class="text-center text-muted fw-bold mt-3">
+    <i class="mdi mdi-alert-circle-outline"></i> Aucune unité trouvée.</p>
+}
+
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+    <form method="post" asp-page-handler="Create">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createModalLabel">Créer une nouvelle unité</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+            <input type="text" class="form-control form-control-sm" id="regionName" placeholder="Unité" asp-for="Unite.symbole">
+        </div>
+      </div>
+      <div class="modal-footer p-2">
+        <button type="button" class="btn btn-secondary btn" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-primary btn" id="saveRegionBtn">Enregistrer</button>
+      </div>
+      <div asp-validation-summary="All" class="text-danger"></div>
+    </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" >
+    <form method="post" asp-page="Index" asp-page-handler="Update">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="editModalLabel">Modifier l'unité</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="uniteId" asp-for="Unite.idUnite"/>
+            <div class="mb-2">
+                <label for="exampleSelectGender">Unité</label> 
+                <input type="text" class="form-control form-control-sm" id="uniteName" asp-for="Unite.symbole" placeholder="Nom">
+            </div>
+        </div>
+        <div class="modal-footer p-2">
+            <button type="button" class="btn btn-secondary btn" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="btn btn-primary btn" id="saveRegionBtn">Enregistrer</button>
+        </div>
+        </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">   
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <form method="post" asp-page-handler="Delete">  
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="uniteId" name="id" />
+        <p>Voulez-vous vraiment supprimer l'unité "<strong id="uniteName"></strong>" de la liste?</p>
+      </div>
+      <div class="modal-footer p-2">
+        <button type="button" class="btn btn-inverse-danger btn-fw" data-bs-dismiss="modal">Non</button>
+        <button type="submit" class="btn btn-inverse-success btn-fw" id="confirmDeleteBtn">Oui</button>
+      </div>
+    </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="validateModal" tabindex="-1" aria-labelledby="validateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+  <form method="post" asp-page-handler="Validate">  
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="validateModalLabel">Confirmer la validation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="uniteId" name="id" />
+        <p>Voulez-vous vraiment valider le catégorie "<strong id="uniteName"></strong>" ?</p>
+      </div>
+      <div class="modal-footer p-2">
+        <button type="button" class="btn btn-inverse-danger btn-fw" data-bs-dismiss="modal">Non</button>
+        <button type="submit" class="btn btn-inverse-success btn-fw" id="confirmDeleteBtn">Oui</button>
+      </div>
+    </div>
+    </form>
+  </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/js/personal/unite.js"></script>
+    <script>
+        $(document).ready(function () {
+            var showModal = '@ViewData["ShowCreateModal"]';
+            if (showModal === 'True') {
+                var myModal = new bootstrap.Modal(document.getElementById('createModal'));
+                myModal.show();
+            }
+        });
+    </script>
+}

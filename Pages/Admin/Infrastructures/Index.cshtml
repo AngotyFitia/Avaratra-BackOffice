@@ -1,23 +1,23 @@
 @page
-@model Avaratra.BackOffice.Pages_Communes.IndexModel
+@model Avaratra.BackOffice.Pages_Admin_Infrastructures.IndexModel
 
 @{
-    ViewData["Title"] = "Communes";
+    ViewData["Title"] = "Index";
 }
-@section Styles {
-    <link rel="stylesheet" href="~/css/personal_style/Index.css" />
-}
-
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h3 class="mb-1">Communes</h3>
-        <small class="text-muted">Gestion et recherche des communes</small>
+        <h3 class="mb-1">Infrastructures</h3>
+        <small class="text-muted">Gestion et recherche des infrastructures</small>
     </div>
     <div class="d-flex gap-2">
-    <form method="post" enctype="multipart/form-data" asp-page-handler="ImportCsv">
+    <form method="post" asp-page="Index" enctype="multipart/form-data" asp-page-handler="ImportCsv" >
         <input type="file" id="csvFileInput" name="csvFile" accept=".csv" style="display:none" />
         <button type="submit" class="btn btn-inverse-success btn-fw" id="btnImportCsv"><i class="mdi mdi-file-import"></i> Import csv</button>
-        <a asp-page="Create" class="btn btn-inverse-primary btn-fw" data-bs-toggle="modal" data-bs-target="#createModal"><i class="icon-plus"></i> Nouvelle commune</a>
+        <a asp-page="Create" class="btn btn-inverse-primary btn-fw" data-bs-toggle="modal" data-bs-target="#createModal"><i class="icon-plus"></i> Nouvelle infrastructure</a>
+        @* @if (TempData["Message"] != null)
+        {
+            <div class="alert alert-success">@TempData["Message"]</div>
+        } *@
     </form>
     </div>
 </div>
@@ -25,19 +25,10 @@
 <form method="get" class="mb-4">
   <div class="row g-2 align-items-center">
     <div class="col-md-2">
-      <input type="text" class="form-control form-control-sm" placeholder="Région" name="SearchRegion" >
+      <input type="text" class="form-control form-control-sm" placeholder="Infrastructure" name="SearchInfrastructure" >
     </div>
     <div class="col-md-2">
-      <input type="text" class="form-control form-control-sm" placeholder="District" name="SearchDistrict" >
-    </div>
-    <div class="col-md-2">
-      <input type="text" class="form-control form-control-sm" placeholder="Communes" name="SearchIntitule" >
-    </div>
-    <div class="col-md-2">
-      <input type="number" class="form-control form-control-sm" placeholder="Min pop." name="MinPopulation">
-    </div>
-    <div class="col-md-2">
-      <input type="number" class="form-control form-control-sm" placeholder="Max pop." name="MaxPopulation">
+      <input type="text" class="form-control form-control-sm" placeholder="Catégories" name="SearchCategorie" >
     </div>
     <div class="col-md-2">
       <select class="form-select form-select-sm" name="Etat">
@@ -53,10 +44,10 @@
     </div>
   </div>
 </form>
-<hr />
 
-@if (Model.Communes != null && Model.Communes.Any()){
-<div class="d-flex justify-content-end mb-2 gap-2">
+<hr />
+@if (Model.Infrastructures != null && Model.Infrastructures.Any()){
+    <div class="d-flex justify-content-end mb-2 gap-2">
     <button type="button" class="btn btn-inverse-danger btn-fw" id="deleteAllBtn" >Tout supprimer</button>
     <button type="button" class="btn btn-inverse-success btn-fw" id="validateAllBtn" >Valider tout</button>
 </div>
@@ -65,28 +56,24 @@
     <thead class="table-light">
         <tr>
             <th scope="col" class="text-center"> <input type="checkbox" id="selectAll"></th>
-            <th class="text-center">Région</th>
-            <th class="text-start">District</th>
-            <th class="text-center">Commune</th>
-            <th class="text-center">Nombre de population</th>
+            <th class="text-start">Infrastructure</th>
+            <th class="text-center">Catégorie</th>
             <th class="text-center">Etat</th>
             <th class="text-center">Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.Communes)
+        @foreach (var item in Model.Infrastructures)
         {
             <tr>
-                <td class="text-center"><input type="checkbox" class="rowCheckbox" data-id="@item.idCommune"/></td>
-                <td class="text-center">@item.District.Region.intitule </td>
-                <td class="text-center">@item.District.intitule </td>
+                <td class="text-center"><input type="checkbox" class="rowCheckbox" data-id="@item.idInfrastructure"/></td>
                 <td class="text-start"style="word-wrap: break-word; width: 250px;  white-space: normal;" >@item.intitule</td>
-                <td class="text-center">@item.nombrePopulation</td>
+                <td class="text-center">@item.Categorie.intitule </td>
                 <td class="text-center">@item.etat</td>
-                <td>
-                <button type="button" class="btn btn-inverse-warning btn-xs custom-width"  data-bs-toggle="modal"  data-bs-target="#editModal" data-id="@item.idCommune" data-name="@item.intitule" data-pop="@item.nombrePopulation" data-discrict-id="@item.IdDistrict"><i class="mdi mdi-pen"></i></button>
-                <button type="button" class="btn btn-inverse-danger btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-delete"></i></button>
-                <button type="button" class="btn btn-inverse-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#validateModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-check"></i></button>
+                <td class="text-center">
+                <button type="button" class="btn btn-inverse-warning btn-xs custom-width"  data-bs-toggle="modal"  data-bs-target="#editModal" data-id="@item.idInfrastructure" data-name="@item.intitule" data-categorieId="@item.IdCategorie"><i class="mdi mdi-pen"></i></button>
+                <button type="button" class="btn btn-inverse-danger btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idInfrastructure" data-name="@item.intitule"><i class="mdi mdi-delete"></i></button>
+                <button type="button" class="btn btn-inverse-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#validateModal"data-id="@item.idInfrastructure" data-name="@item.intitule"><i class="mdi mdi-check"></i></button>
                 </td>
             </tr>
         }
@@ -95,53 +82,42 @@
 
 <nav aria-label="Page navigation example" class="mt-3">
     <ul class="pagination justify-content-end">
-        @if (Model.Communes.HasPreviousPage)
+        @if (Model.Infrastructures.HasPreviousPage)
         {
-            <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Communes.PageIndex - 1)">Précédent</a></li>
+            <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Infrastructures.PageIndex - 1)">Précédent</a></li>
         }
-        @if (Model.Communes.HasNextPage)
+        @if (Model.Infrastructures.HasNextPage)
         {
-            <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Communes.PageIndex + 1)">Suivant</a></li>
+            <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Infrastructures.PageIndex + 1)">Suivant</a></li>
         }
     </ul>
 </nav>
+
 }else { 
     <p class="text-center text-muted fw-bold mt-3">
-    <i class="mdi mdi-alert-circle-outline"></i> Aucune commune trouvée.</p>
+    <i class="mdi mdi-alert-circle-outline"></i> Aucune infrastructure trouvée.</p>
      }
-    
+
 <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
     <form method="post" asp-page-handler="Create">
       <div class="modal-header">
-        <h5 class="modal-title" id="createModalLabel">Créer un nouveau district</h5>
+        <h5 class="modal-title" id="createModalLabel">Créer une nouvelle infrastructure</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
       <div class="modal-body">
         <div class="mb-2">
-            <input type="text" class="form-control form-control-sm" id="regionName" placeholder="Commune" asp-for="Commune.intitule">
+            <input type="text" class="form-control form-control-sm" id="regionName" placeholder="Infrastructure" asp-for="Infrastructure.intitule">
         </div>
         <div class="form-group">
-            <label for="exampleSelectGender">District</label> 
-            <select class="form-select" id="exampleSelectGender" asp-for="Commune.IdDistrict">
-                @foreach (var item in Model.DistrictsValides)
+            <label for="exampleSelectGender">Catégorie</label> 
+            <select class="form-select" id="exampleSelectGender" asp-for="Infrastructure.IdCategorie">
+                @foreach (var item in Model.CategoriesValidees)
                 {
-                    <option value="@item.idDistrict">@item.intitule</option>
+                    <option value="@item.idCategorie">@item.intitule</option>
                 }
             </select>
-        </div>
-        <div class="mb-2">
-            <button type="button" id="btnGetLocation" class="btn btn-inverse-primary btn-fw form-control" > <i class="mdi mdi-crosshairs-gps"> Obtenir ma position</i></button>
-        </div>
-        <div class="mb-2">
-            <input type="number" id="Commune_latitude"  class="form-control form-control-sm" step="any" asp-for="Commune.latitude" placeholder="Latitude">
-        </div>
-        <div class="mb-2">
-            <input type="number" id="Commune_longitude" class="form-control form-control-sm" step="any" asp-for="Commune.longitude"  placeholder="Longitude">
-        </div>
-        <div class="mb-2">
-            <input type="number"  class="form-control form-control-sm" step="any"  placeholder="Nombre de population" asp-for="Commune.nombrePopulation">
         </div>
       </div>
       <div class="modal-footer p-2">
@@ -159,35 +135,31 @@
     <form method="post" asp-page="Index" asp-page-handler="Update">
         <div class="modal-content">
         <div class="modal-header">
-            <h5 class="modal-title" id="editModalLabel">Modifier la commune</h5>
+            <h5 class="modal-title" id="editModalLabel">Modifier le district</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
         </div>
         <div class="modal-body">
-            <input type="hidden" id="communeId" asp-for="Commune.idCommune"/>
+            <input type="hidden" id="infrastructureId" asp-for="Infrastructure.idInfrastructure"/>
             <div class="mb-2">
-                <label for="exampleSelectGender">Commune</label> 
-                <input type="text" class="form-control form-control-sm" id="communeName" asp-for="Commune.intitule" placeholder="Nom">
+                <label for="exampleSelectGender">Infrastructure</label> 
+                <input type="text" class="form-control form-control-sm" id="infrastructureName" asp-for="Infrastructure.intitule" placeholder="Nom">
             </div>
             <div class="form-group">
-                <label for="exampleSelectGender">District</label> 
-                <select class="form-select" id="districtList" asp-for="Commune.IdDistrict">
-                    @foreach (var item in Model.DistrictsValides)
+                <label for="exampleSelectGender">Categorie</label> 
+                <select class="form-select" id="categoryList" asp-for="Infrastructure.IdCategorie">
+                    @foreach (var item in Model.CategoriesValidees)
                     {
-                        if (Model.Commune != null && item.idDistrict == Model.Commune.IdDistrict)
+                        if (Model.Infrastructure != null && item.idCategorie == Model.Infrastructure.IdCategorie)
                         {
-                            <option value="@item.idDistrict" selected>@item.intitule</option>
+                            <option value="@item.idCategorie" selected>@item.intitule</option>
                         }
                         else
                         {
-                            <option value="@item.idDistrict">@item.intitule</option>
+                            <option value="@item.idCategorie">@item.intitule</option>
                         }
                     }
 
                 </select>
-            </div>
-            <div class="mb-2">
-                <label for="exampleSelectGender">Nombre de population</label> 
-                <input type="number" class="form-control form-control-sm" id="communePop" asp-for="Commune.nombrePopulation" step="any" placeholder="Nombre de population">
             </div>
         </div>
         <div class="modal-footer p-2">
@@ -208,8 +180,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
       <div class="modal-body">
-        <input type="hidden" id="communeId" name="id" />
-        <p>Voulez-vous vraiment supprimer la commune "<strong id="communeName"></strong>" de la liste?</p>
+        <input type="hidden" id="infrastructureId" name="id" />
+        <p>Voulez-vous vraiment supprimer l'infrastructure "<strong id="infrastructureName"></strong>" de la liste?</p>
       </div>
       <div class="modal-footer p-2">
         <button type="button" class="btn btn-inverse-danger btn-fw" data-bs-dismiss="modal">Non</button>
@@ -229,8 +201,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
       <div class="modal-body">
-        <input type="hidden" id="communeId" name="id" />
-        <p>Voulez-vous vraiment valider la commune "<strong id="communeName"></strong>" ?</p>
+        <input type="hidden" id="infrastructureId" name="id" />
+        <p>Voulez-vous vraiment valider l'infrastructure "<strong id="infrastructureName"></strong>" ?</p>
       </div>
       <div class="modal-footer p-2">
         <button type="button" class="btn btn-inverse-danger btn-fw" data-bs-dismiss="modal">Non</button>
@@ -242,7 +214,7 @@
 </div>
 
 @section Scripts {
-    <script src="~/assets/js/personal/commune.js"></script>
+    <script src="~/assets/js/personal/infrastructure.js"></script>
     <script>
         $(document).ready(function () {
             var showModal = '@ViewData["ShowCreateModal"]';

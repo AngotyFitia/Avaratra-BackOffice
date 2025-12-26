@@ -42,8 +42,8 @@
     <div class="col-md-2">
       <select class="form-select form-select-sm" name="Etat">
         <option value="">État</option>
-        <option value="0">Non validé</option>
-        <option value="1">Validé</option>
+        <option value="0" selected="@(Model.Etat == 0)">Non validé</option>
+        <option value="5" selected="@(Model.Etat == 5)">Validé</option>
       </select>
     </div>
     <div class="col-md-2 d-flex align-items-end">
