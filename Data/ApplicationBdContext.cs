@@ -17,8 +17,8 @@ namespace Avaratra.BackOffice.Data
         public DbSet<Categorie> Categorie { get; set; }
         public DbSet<Infrastructure> Infrastructure { get; set; }
         public DbSet<Capteur> Capteur { get; set; }
-        public DbSet<TypeMesure> TypeMesure { get; set; }
         public DbSet<Unite> Unite { get; set; }
+        public DbSet<TypeMesure> TypeMesure { get; set; }
         public DbSet<Mesure> Mesure { get; set; }
         public DbSet<TypeSignalement> TypeSignalement { get; set; }
         public DbSet<Signalement> Signalement { get; set; }
@@ -28,15 +28,15 @@ namespace Avaratra.BackOffice.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Mesure>()
-                .HasOne(m => m.utilisateur)
+                .HasOne(m => m.Utilisateur)
                 .WithMany(u => u.mesures)
-                .HasForeignKey(m => m.idUtilisateur)
+                .HasForeignKey(m => m.IdUtilisateur)
                 .OnDelete(DeleteBehavior.Restrict); // pas de cascade
 
             modelBuilder.Entity<Mesure>()
-                .HasOne(m => m.unite)
+                .HasOne(m => m.Unite)
                 .WithMany(u => u.mesures)
-                .HasForeignKey(m => m.idUnite)
+                .HasForeignKey(m => m.IdUnite)
                 .OnDelete(DeleteBehavior.Restrict); // pas de cascade
 
             modelBuilder.Entity<Responsable>()

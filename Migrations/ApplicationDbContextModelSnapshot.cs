@@ -153,6 +153,10 @@ namespace Avaratra.BackOffice.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("idCommune"));
 
+                    b.Property<int>("IdDistrict")
+                        .HasColumnType("int")
+                        .HasColumnName("id_district");
+
                     b.Property<int>("etat")
                         .HasColumnType("int")
                         .HasColumnName("etat");
@@ -161,9 +165,6 @@ namespace Avaratra.BackOffice.Migrations
                         .IsRequired()
                         .HasColumnType("geography")
                         .HasColumnName("geometrie");
-
-                    b.Property<int>("id_district")
-                        .HasColumnType("int");
 
                     b.Property<string>("intitule")
                         .IsRequired()
@@ -184,19 +185,23 @@ namespace Avaratra.BackOffice.Migrations
 
                     b.HasKey("idCommune");
 
-                    b.HasIndex("id_district");
+                    b.HasIndex("IdDistrict");
 
                     b.ToTable("Commune");
                 });
 
             modelBuilder.Entity("Avaratra.BackOffice.Models.District", b =>
                 {
-                    b.Property<int>("IdDistrict")
+                    b.Property<int>("idDistrict")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("id_district");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdDistrict"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("idDistrict"));
+
+                    b.Property<int>("IdRegion")
+                        .HasColumnType("int")
+                        .HasColumnName("id_region");
 
                     b.Property<int>("etat")
                         .HasColumnType("int")
@@ -206,9 +211,6 @@ namespace Avaratra.BackOffice.Migrations
                         .IsRequired()
                         .HasColumnType("geography")
                         .HasColumnName("geometrie");
-
-                    b.Property<int>("id_region")
-                        .HasColumnType("int");
 
                     b.Property<string>("intitule")
                         .IsRequired()
@@ -227,9 +229,9 @@ namespace Avaratra.BackOffice.Migrations
                         .HasColumnType("int")
                         .HasColumnName("total_population_district");
 
-                    b.HasKey("IdDistrict");
+                    b.HasKey("idDistrict");
 
-                    b.HasIndex("id_region");
+                    b.HasIndex("IdRegion");
 
                     b.ToTable("District");
                 });
@@ -243,12 +245,13 @@ namespace Avaratra.BackOffice.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("idInfrastructure"));
 
+                    b.Property<int>("IdCategorie")
+                        .HasColumnType("int")
+                        .HasColumnName("id_categorie");
+
                     b.Property<int>("etat")
                         .HasColumnType("int")
                         .HasColumnName("etat");
-
-                    b.Property<int>("id_categorie")
-                        .HasColumnType("int");
 
                     b.Property<string>("intitule")
                         .IsRequired()
@@ -257,7 +260,7 @@ namespace Avaratra.BackOffice.Migrations
 
                     b.HasKey("idInfrastructure");
 
-                    b.HasIndex("id_categorie");
+                    b.HasIndex("IdCategorie");
 
                     b.ToTable("Infrastructure");
                 });
@@ -271,6 +274,22 @@ namespace Avaratra.BackOffice.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("idMesure"));
 
+                    b.Property<int>("IdCapteur")
+                        .HasColumnType("int")
+                        .HasColumnName("id_capteur");
+
+                    b.Property<int>("IdTypeMesure")
+                        .HasColumnType("int")
+                        .HasColumnName("id_type_mesure");
+
+                    b.Property<int>("IdUnite")
+                        .HasColumnType("int")
+                        .HasColumnName("id_unite");
+
+                    b.Property<int>("IdUtilisateur")
+                        .HasColumnType("int")
+                        .HasColumnName("id_utilisateur");
+
                     b.Property<DateTime>("datePrise")
                         .HasColumnType("datetime2")
                         .HasColumnName("date_prise");
@@ -279,33 +298,19 @@ namespace Avaratra.BackOffice.Migrations
                         .HasColumnType("int")
                         .HasColumnName("etat");
 
-                    b.Property<int>("idUnite")
-                        .HasColumnType("int")
-                        .HasColumnName("id_unite");
-
-                    b.Property<int>("idUtilisateur")
-                        .HasColumnType("int")
-                        .HasColumnName("id_utilisateur");
-
-                    b.Property<int>("id_capteur")
-                        .HasColumnType("int");
-
-                    b.Property<int>("id_type_mesure")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("valeur")
                         .HasColumnType("decimal(9,6)")
                         .HasColumnName("valeur");
 
                     b.HasKey("idMesure");
 
-                    b.HasIndex("idUnite");
+                    b.HasIndex("IdCapteur");
 
-                    b.HasIndex("idUtilisateur");
+                    b.HasIndex("IdTypeMesure");
 
-                    b.HasIndex("id_capteur");
+                    b.HasIndex("IdUnite");
 
-                    b.HasIndex("id_type_mesure");
+                    b.HasIndex("IdUtilisateur");
 
                     b.ToTable("Mesure");
                 });
@@ -494,6 +499,10 @@ namespace Avaratra.BackOffice.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("idTypeMesure"));
 
+                    b.Property<int>("IdUnite")
+                        .HasColumnType("int")
+                        .HasColumnName("id_unite");
+
                     b.Property<string>("description")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -510,6 +519,8 @@ namespace Avaratra.BackOffice.Migrations
                         .HasColumnName("intitule");
 
                     b.HasKey("idTypeMesure");
+
+                    b.HasIndex("IdUnite");
 
                     b.ToTable("TypeMesure");
                 });
@@ -569,6 +580,14 @@ namespace Avaratra.BackOffice.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("idUtilisateur"));
 
+                    b.Property<int>("IdCommune")
+                        .HasColumnType("int")
+                        .HasColumnName("id_commune");
+
+                    b.Property<int>("IdProfil")
+                        .HasColumnType("int")
+                        .HasColumnName("id_profil");
+
                     b.Property<DateTime>("dateCreation")
                         .HasColumnType("datetime2")
                         .HasColumnName("date_creation");
@@ -585,12 +604,6 @@ namespace Avaratra.BackOffice.Migrations
                     b.Property<int>("etat")
                         .HasColumnType("int")
                         .HasColumnName("etat");
-
-                    b.Property<int>("id_commune")
-                        .HasColumnType("int");
-
-                    b.Property<int>("id_profil")
-                        .HasColumnType("int");
 
                     b.Property<string>("motDePasse")
                         .IsRequired()
@@ -609,9 +622,9 @@ namespace Avaratra.BackOffice.Migrations
 
                     b.HasKey("idUtilisateur");
 
-                    b.HasIndex("id_commune");
+                    b.HasIndex("IdCommune");
 
-                    b.HasIndex("id_profil");
+                    b.HasIndex("IdProfil");
 
                     b.ToTable("Utilisateur");
                 });
@@ -656,70 +669,70 @@ namespace Avaratra.BackOffice.Migrations
 
             modelBuilder.Entity("Avaratra.BackOffice.Models.Commune", b =>
                 {
-                    b.HasOne("Avaratra.BackOffice.Models.District", "district")
+                    b.HasOne("Avaratra.BackOffice.Models.District", "District")
                         .WithMany()
-                        .HasForeignKey("id_district")
+                        .HasForeignKey("IdDistrict")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("district");
+                    b.Navigation("District");
                 });
 
             modelBuilder.Entity("Avaratra.BackOffice.Models.District", b =>
                 {
-                    b.HasOne("Avaratra.BackOffice.Models.Region", "region")
+                    b.HasOne("Avaratra.BackOffice.Models.Region", "Region")
                         .WithMany()
-                        .HasForeignKey("id_region")
+                        .HasForeignKey("IdRegion")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("region");
+                    b.Navigation("Region");
                 });
 
             modelBuilder.Entity("Avaratra.BackOffice.Models.Infrastructure", b =>
                 {
-                    b.HasOne("Avaratra.BackOffice.Models.Categorie", "categorie")
+                    b.HasOne("Avaratra.BackOffice.Models.Categorie", "Categorie")
                         .WithMany()
-                        .HasForeignKey("id_categorie")
+                        .HasForeignKey("IdCategorie")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("categorie");
+                    b.Navigation("Categorie");
                 });
 
             modelBuilder.Entity("Avaratra.BackOffice.Models.Mesure", b =>
                 {
-                    b.HasOne("Avaratra.BackOffice.Models.Unite", "unite")
-                        .WithMany("mesures")
-                        .HasForeignKey("idUnite")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Avaratra.BackOffice.Models.Utilisateur", "utilisateur")
-                        .WithMany("mesures")
-                        .HasForeignKey("idUtilisateur")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Avaratra.BackOffice.Models.Capteur", "capteur")
+                    b.HasOne("Avaratra.BackOffice.Models.Capteur", "Capteur")
                         .WithMany()
-                        .HasForeignKey("id_capteur")
+                        .HasForeignKey("IdCapteur")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Avaratra.BackOffice.Models.TypeMesure", "typeMesure")
+                    b.HasOne("Avaratra.BackOffice.Models.TypeMesure", "TypeMesure")
                         .WithMany()
-                        .HasForeignKey("id_type_mesure")
+                        .HasForeignKey("IdTypeMesure")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("capteur");
+                    b.HasOne("Avaratra.BackOffice.Models.Unite", "Unite")
+                        .WithMany("mesures")
+                        .HasForeignKey("IdUnite")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("typeMesure");
+                    b.HasOne("Avaratra.BackOffice.Models.Utilisateur", "Utilisateur")
+                        .WithMany("mesures")
+                        .HasForeignKey("IdUtilisateur")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("unite");
+                    b.Navigation("Capteur");
 
-                    b.Navigation("utilisateur");
+                    b.Navigation("TypeMesure");
+
+                    b.Navigation("Unite");
+
+                    b.Navigation("Utilisateur");
                 });
 
             modelBuilder.Entity("Avaratra.BackOffice.Models.Responsable", b =>
@@ -768,23 +781,34 @@ namespace Avaratra.BackOffice.Migrations
                     b.Navigation("utilisateur");
                 });
 
+            modelBuilder.Entity("Avaratra.BackOffice.Models.TypeMesure", b =>
+                {
+                    b.HasOne("Avaratra.BackOffice.Models.Unite", "Unite")
+                        .WithMany()
+                        .HasForeignKey("IdUnite")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Unite");
+                });
+
             modelBuilder.Entity("Avaratra.BackOffice.Models.Utilisateur", b =>
                 {
-                    b.HasOne("Avaratra.BackOffice.Models.Commune", "commune")
+                    b.HasOne("Avaratra.BackOffice.Models.Commune", "Commune")
                         .WithMany()
-                        .HasForeignKey("id_commune")
+                        .HasForeignKey("IdCommune")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Avaratra.BackOffice.Models.Profil", "profil")
+                    b.HasOne("Avaratra.BackOffice.Models.Profil", "Profil")
                         .WithMany()
-                        .HasForeignKey("id_profil")
+                        .HasForeignKey("IdProfil")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("commune");
+                    b.Navigation("Commune");
 
-                    b.Navigation("profil");
+                    b.Navigation("Profil");
                 });
 
             modelBuilder.Entity("Avaratra.BackOffice.Models.TypeSignalement", b =>

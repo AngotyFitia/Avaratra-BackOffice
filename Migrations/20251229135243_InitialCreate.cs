@@ -72,21 +72,6 @@ namespace Avaratra.BackOffice.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TypeMesure",
-                columns: table => new
-                {
-                    id_type_mesure = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    intitule = table.Column<string>(type: "varchar(255)", nullable: false),
-                    description = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    etat = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TypeMesure", x => x.id_type_mesure);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TypeSignalement",
                 columns: table => new
                 {
@@ -157,6 +142,28 @@ namespace Avaratra.BackOffice.Migrations
                         column: x => x.id_region,
                         principalTable: "Region",
                         principalColumn: "id_region",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TypeMesure",
+                columns: table => new
+                {
+                    id_type_mesure = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    id_unite = table.Column<int>(type: "int", nullable: false),
+                    intitule = table.Column<string>(type: "varchar(255)", nullable: false),
+                    description = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    etat = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TypeMesure", x => x.id_type_mesure);
+                    table.ForeignKey(
+                        name: "FK_TypeMesure_Unite_id_unite",
+                        column: x => x.id_unite,
+                        principalTable: "Unite",
+                        principalColumn: "id_unite",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -474,6 +481,11 @@ namespace Avaratra.BackOffice.Migrations
                 column: "id_utilisateur");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TypeMesure_id_unite",
+                table: "TypeMesure",
+                column: "id_unite");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Utilisateur_id_commune",
                 table: "Utilisateur",
                 column: "id_commune");
@@ -509,9 +521,6 @@ namespace Avaratra.BackOffice.Migrations
                 name: "TypeMesure");
 
             migrationBuilder.DropTable(
-                name: "Unite");
-
-            migrationBuilder.DropTable(
                 name: "TypeSignalement");
 
             migrationBuilder.DropTable(
@@ -519,6 +528,9 @@ namespace Avaratra.BackOffice.Migrations
 
             migrationBuilder.DropTable(
                 name: "Infrastructure");
+
+            migrationBuilder.DropTable(
+                name: "Unite");
 
             migrationBuilder.DropTable(
                 name: "Commune");
