@@ -207,7 +207,7 @@ namespace Avaratra.BackOffice.Migrations
                         .HasColumnType("int")
                         .HasColumnName("etat");
 
-                    b.Property<Point>("geometrie")
+                    b.Property<Geometry>("geometrie")
                         .IsRequired()
                         .HasColumnType("geography")
                         .HasColumnName("geometrie");
@@ -216,14 +216,6 @@ namespace Avaratra.BackOffice.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)")
                         .HasColumnName("intitule");
-
-                    b.Property<decimal>("latitude")
-                        .HasColumnType("decimal(9,6)")
-                        .HasColumnName("latitude");
-
-                    b.Property<decimal>("longitude")
-                        .HasColumnType("decimal(9,6)")
-                        .HasColumnName("longitude");
 
                     b.Property<int>("totalPopulationDistrict")
                         .HasColumnType("int")

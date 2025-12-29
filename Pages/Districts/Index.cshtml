@@ -6,6 +6,7 @@
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/personal_style/Index.css" />
+    <link rel="stylesheet" href="~/css.ol.css" />
 }
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
@@ -66,6 +67,7 @@
             <th scope="col" class="text-center"> <input type="checkbox" id="selectAll"></th>
             <th class="text-start">District</th>
             <th class="text-center">Région</th>
+            @* <th class="text-center">Géométrie</th> *@
             <th class="text-center">Total population</th>
             <th class="text-center">Etat</th>
             <th class="text-center">Actions</th>
@@ -78,13 +80,16 @@
                 <td class="text-center"><input type="checkbox" class="rowCheckbox" data-id="@item.idDistrict"/></td>
                 <td class="text-start"style="word-wrap: break-word; width: 250px;  white-space: normal;" >@item.intitule</td>
                 <td class="text-center">@item.Region.intitule </td>
+                @* <td class="text-center">@item.geometrie </td> *@
                 <td class="text-center">@item.totalPopulationDistrict</td>
-                <td class="text-center">@item.etat</td>
-                <td>
-                <button type="button" class="btn btn-inverse-warning btn-xs custom-width"  data-bs-toggle="modal"  data-bs-target="#editModal" data-id="@item.idDistrict" data-name="@item.intitule" data-pop="@item.totalPopulationDistrict" data-regionid="@item.IdRegion"><i class="mdi mdi-pen"></i></button>
-                <button type="button" class="btn btn-inverse-danger btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idDistrict" data-name="@item.intitule"><i class="mdi mdi-delete"></i></button>
-                <button type="button" class="btn btn-inverse-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#validateModal"data-id="@item.idDistrict" data-name="@item.intitule"><i class="mdi mdi-check"></i></button>
-                </td>
+                <td class="text-center"><span class="@item.EtatCssClass">@item.EtatText</span></td>
+                <td class="text-center">
+                <button type="button" style="@item.DisplayCrudButtons" class="btn btn-inverse-warning btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#editModal" data-id="@item.idDistrict" data-name="@item.intitule" data-pop="@item.totalPopulationDistrict"><i class="mdi mdi-pen"></i></button>
+                <button type="button" style="@item.DisplayCrudButtons" class="btn btn-inverse-danger btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idDistrict" data-name="@item.intitule"><i class="mdi mdi-delete"></i></button>
+                <button type="button" style="@item.DisplayCrudButtons" class="btn btn-inverse-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#validateModal" data-id="@item.idDistrict" data-name="@item.intitule"> <i class="mdi mdi-check"></i></button>
+                <button type="button" style="@item.DisplaySpecialValidation" class="btn btn-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#finalModal" data-id="@item.idDistrict" data-name="@item.intitule"> <i class="mdi mdi-check"></i></button>
+                <button type="button" style="@item.DisplayFinalValidation" class="btn btn-inverse-primary btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="@item.idDistrict" data-name="@item.intitule" data-geometry="@item.geometrie.ToText()"><i class="mdi mdi-eye"></i></button>
+              </td>
             </tr>
         }
     </tbody>
@@ -130,15 +135,6 @@
             </select>
         </div>
         <div class="mb-2">
-            <button type="button" id="btnGetLocation" class="btn btn-inverse-primary btn-fw form-control" > <i class="mdi mdi-crosshairs-gps"> Obtenir ma position</i></button>
-        </div>
-        <div class="mb-2">
-            <input type="number" id="District_latitude"  class="form-control form-control-sm" step="any" asp-for="District.latitude" placeholder="Latitude">
-        </div>
-        <div class="mb-2">
-            <input type="number" id="District_longitude" class="form-control form-control-sm" step="any" asp-for="District.longitude"  placeholder="Longitude">
-        </div>
-        <div class="mb-2">
             <input type="number"  class="form-control form-control-sm" step="any"  placeholder="Nombre de population" asp-for="District.totalPopulationDistrict">
         </div>
       </div>
@@ -153,7 +149,7 @@
 </div>
 
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" >
+  <div class="modal-dialog modal-sm modal-dialog-centered" >
     <form method="post" asp-page="Index" asp-page-handler="Update">
         <div class="modal-content">
         <div class="modal-header">
@@ -199,15 +195,15 @@
 
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">   
   <div class="modal-dialog modal-sm modal-dialog-centered">
-    <form method="post" asp-page-handler="Delete">  
+    <form method="post" asp-page="Index" asp-page-handler="Delete">  
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
       <div class="modal-body">
-        <input type="hidden" id="districtId" name="id" />
-        <p>Voulez-vous vraiment supprimer le district "<strong id="districtName "></strong>" de la liste?</p>
+        <input type="hidden" id="districtId" name="id"/>
+        <p>Voulez-vous vraiment supprimer le district "<strong id="districtName"></strong>" de la liste?</p>
       </div>
       <div class="modal-footer p-2">
         <button type="button" class="btn btn-inverse-danger btn-fw" data-bs-dismiss="modal">Non</button>
@@ -220,14 +216,14 @@
 
 <div class="modal fade" id="validateModal" tabindex="-1" aria-labelledby="validateModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-sm modal-dialog-centered">
-  <form method="post" asp-page-handler="Validate">  
+  <form method="post" asp-page="Index"  asp-page-handler="Validate">  
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="validateModalLabel">Confirmer la validation</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
       <div class="modal-body">
-        <input type="hidden" id="districtId" name="id" />
+        <input type="hidden" id="districtId" name="id" value="districtId"/>
         <p>Voulez-vous vraiment valider le district "<strong id="districtName"></strong>" ?</p>
       </div>
       <div class="modal-footer p-2">
@@ -239,8 +235,46 @@
   </div>
 </div>
 
+<div class="modal fade" id="finalModal" tabindex="-1" aria-labelledby="finalModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+  <form method="post" asp-page-handler="Confirm">  
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="finalModalLabel">Confirmation du district</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="districtId" name="id" />
+        <p>Voulez-vous vraiment valider le district "<strong id="districtName"></strong>" ?</p>
+        <p>La validation de ce ditrict va aussi alors valider toutes les communes et il sera possible de voir le district sur la carte.</p>
+      </div>
+      <div class="modal-footer p-2">
+        <button type="button" class="btn btn-inverse-danger btn-fw" data-bs-dismiss="modal">Non</button>
+        <button type="submit" class="btn btn-inverse-success btn-fw" id="confirmDeleteBtn">Oui</button>
+      </div>
+    </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Géométrie du district</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="map" style="height:400px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 @section Scripts {
+    <script src="~/assets/js/ol.js"></script>
     <script src="~/assets/js/personal/district.js"></script>
+    <script>console.log("OpenLayers version:", ol.VERSION);</script>
     <script>
         $(document).ready(function () {
             var showModal = '@ViewData["ShowCreateModal"]';

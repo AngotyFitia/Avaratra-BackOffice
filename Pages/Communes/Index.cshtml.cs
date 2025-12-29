@@ -136,12 +136,7 @@ namespace Avaratra.BackOffice.Pages_Communes
                 communeDb.District.totalPopulationDistrict += communeDb.nombrePopulation;
                 Console.WriteLine($"Après: {communeDb.District.totalPopulationDistrict}");
             }
-
             communeDb.etat = 5;
-            if (communeDb.District != null)
-            {
-                communeDb.District.totalPopulationDistrict += communeDb.nombrePopulation;
-            }
 
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");

@@ -37,5 +37,50 @@ namespace Avaratra.BackOffice.Models
         [Column("etat")]
         public int etat { get; set; }
 
+        [NotMapped]
+        public string EtatText
+        {
+            get
+            {
+                return etat switch
+                {
+                    0 => "En attente",
+                    5 => "Validée",
+                };
+            }
+        }
+
+        [NotMapped]
+        public string EtatCssClass
+        {
+            get
+            {
+                return etat switch
+                {
+                    0 => "text-warning", 
+                    5 => "text-success",  
+                };
+            }
+        }
+
+        [NotMapped]
+        public string DisplayCrudButtons
+        {
+            get
+            {
+                // Montrer les 3 premiers boutons si etat == 0
+                return etat == 0 ? "" : "display:none;";
+            }
+        }
+
+        [NotMapped]
+        public string DisplaySpecialValidation // (etat == 5)
+        {
+            get
+            {
+                return etat == 5 ? "" : "display:none;";
+            }
+        }
+
     }
 }

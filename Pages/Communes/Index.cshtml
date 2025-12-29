@@ -82,11 +82,12 @@
                 <td class="text-center">@item.District.intitule </td>
                 <td class="text-start"style="word-wrap: break-word; width: 250px;  white-space: normal;" >@item.intitule</td>
                 <td class="text-center">@item.nombrePopulation</td>
-                <td class="text-center">@item.etat</td>
+                <td class="text-center"><span class="@item.EtatCssClass">@item.EtatText</span></td>
                 <td>
-                <button type="button" class="btn btn-inverse-warning btn-xs custom-width"  data-bs-toggle="modal"  data-bs-target="#editModal" data-id="@item.idCommune" data-name="@item.intitule" data-pop="@item.nombrePopulation" data-discrict-id="@item.IdDistrict"><i class="mdi mdi-pen"></i></button>
-                <button type="button" class="btn btn-inverse-danger btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-delete"></i></button>
-                <button type="button" class="btn btn-inverse-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#validateModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-check"></i></button>
+                <button type="button" class="btn btn-inverse-warning btn-xs custom-width" style="@item.DisplayCrudButtons"  data-bs-toggle="modal"  data-bs-target="#editModal" data-id="@item.idCommune" data-name="@item.intitule" data-pop="@item.nombrePopulation" data-discrict-id="@item.IdDistrict"><i class="mdi mdi-pen"></i></button>
+                <button type="button" class="btn btn-inverse-danger btn-xs custom-width" style="@item.DisplayCrudButtons" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-delete"></i></button>
+                <button type="button" class="btn btn-inverse-success btn-xs custom-width" style="@item.DisplayCrudButtons" data-bs-toggle="modal" data-bs-target="#validateModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-check"></i></button>
+                <button type="button" class="btn btn-inverse-primary btn-xs custom-width" style="@item.DisplaySpecialValidation" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-eye"></i></button>
                 </td>
             </tr>
         }

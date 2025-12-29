@@ -7,40 +7,6 @@ document.getElementById('csvFileInput').addEventListener('change', function () {
     this.form.submit();
 });
 
-
-var map, marker;
-function initMap() {
-    map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 0, lng: 0 },
-        zoom: 2
-    });
-    map.addListener('click', function (e) {
-        placeMarker(e.latLng);
-    });
-}
-
-function placeMarker(location) {
-    if (marker) marker.setPosition(location);
-    else marker = new google.maps.Marker({ position: location, map: map });
-
-    document.getElementById('District_latitude').value = location.lat();
-    document.getElementById('District_longitude').value = location.lng();
-}
-
-// Position actuelle
-document.getElementById("btnGetLocation").addEventListener("click", function () {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function (position) {
-            document.getElementById("District_latitude").value = position.coords.latitude;
-            document.getElementById("District_longitude").value = position.coords.longitude;
-        }, function (error) {
-            alert("Impossible de récupérer la position : " + error.message);
-        });
-    } else {
-        alert("La géolocalisation n'est pas supportée par votre navigateur.");
-    }
-});
-
 document.addEventListener('DOMContentLoaded', function () {
     var editModal = document.getElementById('editModal');
     if (editModal) {
@@ -72,8 +38,79 @@ document.addEventListener('DOMContentLoaded', function () {
     if (validateModal) {
         validateModal.addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
+            console.log(button.getAttribute('data-id'));
             validateModal.querySelector('#districtId').value = button.getAttribute('data-id');
             validateModal.querySelector('#districtName').textContent = button.getAttribute('data-name');
         });
     }
+
+    var finalModal = document.getElementById('finalModal');
+    if (finalModal) {
+        finalModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            finalModal.querySelector('#districtId').value = button.getAttribute('data-id');
+            finalModal.querySelector('#districtName').textContent = button.getAttribute('data-name');
+        });
+    }
+
+    var modal = document.getElementById('viewModal');
+        var map, vectorLayer;
+    
+        modal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var wkt = button.getAttribute('data-geometry'); // format POLYGON ((47.5 -18.9, 47.6 -18.9, ...))
+    
+            // Parse WKT avec OpenLayers
+            var format = new ol.format.WKT();
+            var feature = format.readFeature(wkt, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:3857'
+            });
+    
+            // Création de la source et du layer
+            var vectorSource = new ol.source.Vector({
+                features: [feature]
+            });
+    
+            vectorLayer = new ol.layer.Vector({
+                source: vectorSource,
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: 'red',
+                        width: 2
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255,0,0,0.3)'
+                    })
+                })
+            });
+    
+            // Initialisation de la carte si elle n'est  pas encore créée
+            if (!map) {
+                map = new ol.Map({
+                    target: 'map',
+                    layers: [
+                        new ol.layer.Tile({
+                            source: new ol.source.OSM()
+                        }),
+                        vectorLayer
+                    ],
+                    // view: new ol.View({
+                    //     center: ol.proj.fromLonLat([47.5, -18.9]),
+                    //     zoom: 6
+                    // })
+                });
+            } else {
+                map.setLayers([
+                    new ol.layer.Tile({ source: new ol.source.OSM() }),
+                    vectorLayer
+                ]);
+            }
+    
+            // Ajustement de la vue sur le polygone
+            var extent = feature.getGeometry().getExtent();
+            map.getView().fit(extent, { size: map.getSize(), padding: [20,20,20,20], maxZoom:10 });
+        });  
 });
+
+

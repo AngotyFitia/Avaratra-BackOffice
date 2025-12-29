@@ -83,15 +83,16 @@ namespace Avaratra.BackOffice.Pages_Districts
         public async Task<IActionResult> OnPostCreateAsync()
         {
             Console.WriteLine(District.IdRegion);
-            District.latitude = Convert.ToDecimal(Request.Form["District.latitude"], System.Globalization.CultureInfo.InvariantCulture);
-            District.longitude = Convert.ToDecimal(Request.Form["District.longitude"], System.Globalization.CultureInfo.InvariantCulture);
+            // District.latitude = Convert.ToDecimal(Request.Form["District.latitude"], System.Globalization.CultureInfo.InvariantCulture);
+            // District.longitude = Convert.ToDecimal(Request.Form["District.longitude"], System.Globalization.CultureInfo.InvariantCulture);
 
             if (!ModelState.IsValid){
                 ViewData["ShowCreateModal"] = true;
                 return Page();
             }
             var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-            District.geometrie = geometryFactory.CreatePoint(new Coordinate((double)District.longitude, (double)District.latitude));
+            // District.geometrie = geometryFactory.CreatePoint(new Coordinate((double)District.longitude, (double)District.latitude));
+            District.geometrie = geometryFactory.CreatePoint(new Coordinate(0, 0));            
             District.etat = 0;
             _context.District.Add(District);
             await _context.SaveChangesAsync();
@@ -136,6 +137,44 @@ namespace Avaratra.BackOffice.Pages_Districts
             }
 
             await _context.SaveChangesAsync();
+            return RedirectToPage("./Index");
+        }
+
+        public async Task<IActionResult> OnPostConfirmAsync(int? id)
+        {
+            var districtDb = await _context.District
+                .Include(d => d.Region)
+                .Include(d => d.Communes) // inclure les communes liées
+                .FirstOrDefaultAsync(d => d.idDistrict == id);
+
+            if (districtDb == null) return NotFound();
+
+            // 1. Changer l'état
+            districtDb.etat = 10;
+
+            // 3. Construire la géométrie du district à partir des communes
+            var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+
+            // Récupérer les points des communes
+            var communePoints = districtDb.Communes
+                .Select(c => geometryFactory.CreatePoint(new Coordinate((double)c.longitude, (double)c.latitude)))
+                .ToArray();
+
+            if (communePoints.Length > 0)
+            {
+                // Exemple : créer un MultiPoint puis un polygone englobant
+                var multiPoint = geometryFactory.CreateMultiPoint(communePoints);
+                districtDb.geometrie = multiPoint.ConvexHull(); // polygone englobant toutes les communes
+            }
+            else
+            {
+                // Si pas de communes, garder un point neutre
+                districtDb.geometrie = geometryFactory.CreatePoint(new Coordinate(0, 0));
+            }
+
+            _context.Update(districtDb);
+            await _context.SaveChangesAsync();
+
             return RedirectToPage("./Index");
         }
 
@@ -185,11 +224,11 @@ namespace Avaratra.BackOffice.Pages_Districts
                     {
                         intitule = districtName,
                         IdRegion = region.idRegion,
-                        latitude = latitude,
-                        longitude = longitude,
+                        // latitude = latitude,
+                        // longitude = longitude,
                         totalPopulationDistrict = population,
                         etat = etat,
-                        geometrie = geometryFactory.CreatePoint(new Coordinate((double)longitude, (double)latitude))
+                        geometrie = geometryFactory.CreatePoint(new Coordinate(0, 0))
                     };
 
                     _context.District.Add(district);
