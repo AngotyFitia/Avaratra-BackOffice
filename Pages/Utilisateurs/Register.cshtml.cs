@@ -39,7 +39,7 @@ namespace Avaratra.BackOffice.Pages_Utilisateurs
                 IdProfil=1,
                 email = Email,
                 motDePasse = BCrypt.Net.BCrypt.HashPassword(MotDePasse), // hash avant insertion
-                IdCommune=5
+                IdCommune=1
             };
 
             _context.Utilisateur.Add(user);
