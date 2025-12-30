@@ -74,7 +74,9 @@ namespace Avaratra.BackOffice.Pages_Districts
                                             .OrderBy(r => r.intitule)
                                             .ToListAsync();
             }
-            var ditrict = await _context.District.FirstOrDefaultAsync(m => m.idDistrict == id);
+            var ditrict = await _context.District   .Include(d => d.Communes) 
+                                                    .Include(d => d.Region) 
+                                                    .FirstOrDefaultAsync(d => d.idDistrict == id);
 
             District= ditrict;
             return Page();
