@@ -1,4 +1,4 @@
-body, table, input, select, button {
+/* body, table, input, select, button {
     background-color: black;
     font-family: "Segoe UI", Roboto, Arial, sans-serif;
     font-size: 14px;
@@ -10,4 +10,52 @@ table thead th {
 
 table tbody td {
     font-weight: 400;
-}
+} */
+
+.toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1080;
+  }
+  
+  .toast-custom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 250px;
+    max-width: 350px;
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+    color: #fff;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  
+  .toast-custom.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .toast-success {
+    background-color: #198754; /* vert succès */
+  }
+  
+  .toast-error {
+    background-color: #dc3545; /* rouge erreur */
+  }
+  
+  .toast-body {
+    flex: 1;
+  }
+  
+  .toast-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  

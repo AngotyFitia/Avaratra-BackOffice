@@ -14,22 +14,59 @@ namespace Avaratra.BackOffice.Models
         [Column("intitule", TypeName = "varchar(255)")]
         public string intitule { get; set; } = string.Empty;
 
-        [Column("latitude", TypeName = "decimal(9,6)")]
-        public decimal latitude { get; set; }
-
-        [Column("longitude", TypeName = "decimal(9,6)")]
-        public decimal longitude { get; set; }
-
-        [ValidateNever]
-        [Column("geometrie", TypeName = "geography")]
-        public Point geometrie { get; set; }
-
         [Column("total_population_region")]
         public int totalPopulationRegion { get; set; }
 
         [Column("etat")]
         public int etat { get; set; }
 
-        // public string Coordonnees => geometrie != null ? $"({geometrie.X}, {geometrie.Y})" : "";
+        public ICollection<District> Districts { get; set; } = new List<District>();
+
+
+        [NotMapped]
+        public string EtatText
+        {
+            get
+            {
+                return etat switch
+                {
+                    0 => "En attente",
+                    5 => "Validée",
+                    10 => "Finalisé"
+                };
+            }
+        }
+
+        [NotMapped]
+        public string EtatCssClass
+        {
+            get
+            {
+                return etat switch
+                {
+                    0 => "text-warning", 
+                    5 => "text-success", 
+                    10 => "text-muted" 
+                };
+            }
+        }
+
+        [NotMapped]
+        public string DisplayCrudButtons  
+        {
+            get
+            {
+                return etat == 0 ? "" : "display:none;";
+            }
+        }
+
+        [NotMapped]
+        public string DisplayView 
+        {
+            get
+            {
+                return etat == 5 ? "" : "display:none;";
+            }
+        }
     }
 }

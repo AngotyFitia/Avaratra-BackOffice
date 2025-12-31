@@ -27,6 +27,13 @@ namespace Avaratra.BackOffice.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+             modelBuilder.Entity<District>()
+                .HasOne(d => d.Region)                // un district a une région
+                .WithMany(r => r.Districts)           // une région a plusieurs districts
+                .HasForeignKey(d => d.IdRegion)       // clé étrangère
+                .HasPrincipalKey(r => r.idRegion);    // clé primaire
+
             modelBuilder.Entity<Mesure>()
                 .HasOne(m => m.Utilisateur)
                 .WithMany(u => u.mesures)

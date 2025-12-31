@@ -339,23 +339,10 @@ namespace Avaratra.BackOffice.Migrations
                         .HasColumnType("int")
                         .HasColumnName("etat");
 
-                    b.Property<Point>("geometrie")
-                        .IsRequired()
-                        .HasColumnType("geography")
-                        .HasColumnName("geometrie");
-
                     b.Property<string>("intitule")
                         .IsRequired()
                         .HasColumnType("varchar(255)")
                         .HasColumnName("intitule");
-
-                    b.Property<decimal>("latitude")
-                        .HasColumnType("decimal(9,6)")
-                        .HasColumnName("latitude");
-
-                    b.Property<decimal>("longitude")
-                        .HasColumnType("decimal(9,6)")
-                        .HasColumnName("longitude");
 
                     b.Property<int>("totalPopulationRegion")
                         .HasColumnType("int")
@@ -662,7 +649,7 @@ namespace Avaratra.BackOffice.Migrations
             modelBuilder.Entity("Avaratra.BackOffice.Models.Commune", b =>
                 {
                     b.HasOne("Avaratra.BackOffice.Models.District", "District")
-                        .WithMany()
+                        .WithMany("Communes")
                         .HasForeignKey("IdDistrict")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -673,7 +660,7 @@ namespace Avaratra.BackOffice.Migrations
             modelBuilder.Entity("Avaratra.BackOffice.Models.District", b =>
                 {
                     b.HasOne("Avaratra.BackOffice.Models.Region", "Region")
-                        .WithMany()
+                        .WithMany("Districts")
                         .HasForeignKey("IdRegion")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -801,6 +788,16 @@ namespace Avaratra.BackOffice.Migrations
                     b.Navigation("Commune");
 
                     b.Navigation("Profil");
+                });
+
+            modelBuilder.Entity("Avaratra.BackOffice.Models.District", b =>
+                {
+                    b.Navigation("Communes");
+                });
+
+            modelBuilder.Entity("Avaratra.BackOffice.Models.Region", b =>
+                {
+                    b.Navigation("Districts");
                 });
 
             modelBuilder.Entity("Avaratra.BackOffice.Models.TypeSignalement", b =>

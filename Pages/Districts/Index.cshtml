@@ -89,8 +89,6 @@
                 <button type="button" style="@item.DisplayCrudButtons" class="btn btn-inverse-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#validateModal" data-id="@item.idDistrict" data-name="@item.intitule"> <i class="mdi mdi-check"></i></button>
                 <button type="button" style="@item.DisplaySpecialValidation" class="btn btn-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#finalModal" data-id="@item.idDistrict" data-name="@item.intitule"> <i class="mdi mdi-check"></i></button>
                 <button type="button" style="@item.DisplayFinalValidation" class="btn btn-inverse-primary btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="@item.idDistrict" data-name="@item.intitule" data-geometry="@item.geometrie.ToText()" data-communes='@Json.Serialize(item.Communes)'><i class="mdi mdi-eye">@item.Communes.Count</i></button>
-                <p>
-                </p>
               </td>
             </tr>
         }

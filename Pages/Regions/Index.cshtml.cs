@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Avaratra.BackOffice.Utils;
+using Avaratra.BackOffice.Services;
 
 namespace Avaratra.BackOffice.Pages_Regions
 {
@@ -43,10 +44,8 @@ namespace Avaratra.BackOffice.Pages_Regions
         public int? Etat { get; set; }
 
         [BindProperty(SupportsGet = true)]
-        public decimal? Latitude { get; set; }
+        public int PageSize { get; set; } = 2;// valeur par défaut
 
-        [BindProperty(SupportsGet = true)]
-        public decimal? Longitude { get; set; }
 
         public IndexModel(Avaratra.BackOffice.Data.ApplicationDbContext context)
         {
@@ -55,16 +54,12 @@ namespace Avaratra.BackOffice.Pages_Regions
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            Region.latitude = Convert.ToDecimal(Request.Form["Region.latitude"], System.Globalization.CultureInfo.InvariantCulture);
-            Region.longitude = Convert.ToDecimal(Request.Form["Region.longitude"], System.Globalization.CultureInfo.InvariantCulture);
-
             if (!ModelState.IsValid){
                 ViewData["ShowCreateModal"] = true;
                 return Page();
             }
-            var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-            Region.geometrie = geometryFactory.CreatePoint(new Coordinate((double)Region.longitude, (double)Region.latitude));
             Region.etat = 0;
+            Region.totalPopulationRegion=0;
             _context.Region.Add(Region);
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
@@ -74,40 +69,44 @@ namespace Avaratra.BackOffice.Pages_Regions
         {
             if (id == null)
             {
-            const int pageSize = 5;
-            var query = _context.Region.AsQueryable();
-                if (!string.IsNullOrWhiteSpace(SearchIntitule))
-                    query = query.Where(r => r.intitule.Contains(SearchIntitule));
-                if (MinPopulation.HasValue)
-                    query = query.Where(r => r.totalPopulationRegion >= MinPopulation.Value);
-                if (MaxPopulation.HasValue)
-                    query = query.Where(r => r.totalPopulationRegion <= MaxPopulation.Value);
-                if (Etat.HasValue)
-                    query = query.Where(r => r.etat == Etat.Value);
-                if (Latitude.HasValue)
-                    query = query.Where(r => r.latitude == Latitude.Value);
-                if (Longitude.HasValue)
-                    query = query.Where(r => r.longitude == Longitude.Value);
-                query = query.OrderBy(r => r.intitule);
-
-                Regions = await PaginatedList<Region>.CreateAsync(query, pageIndex ?? 1, pageSize);
+                var query = _context.Region.AsQueryable();
+                    if (!string.IsNullOrWhiteSpace(SearchIntitule))
+                        query = query.Where(r => r.intitule.Contains(SearchIntitule));
+                    if (MinPopulation.HasValue)
+                        query = query.Where(r => r.totalPopulationRegion >= MinPopulation.Value);
+                    if (MaxPopulation.HasValue)
+                        query = query.Where(r => r.totalPopulationRegion <= MaxPopulation.Value);
+                    if (Etat.HasValue)
+                        query = query.Where(r => r.etat == Etat.Value);
+                    Regions = await PaginatedList<Region>.CreateAsync(query, pageIndex ?? 1, PageSize);
                 return Page();
             }
             // Mode détails
-            var region = await _context.Region.FirstOrDefaultAsync(m => m.idRegion == id);
+            var region = await _context.Region
+                    .Include(r => r.Districts)
+                    .FirstOrDefaultAsync(m => m.idRegion == id);
             if (region == null) return NotFound();
-
             Region = region;
             return Page();
         }
+
+        public async Task<IActionResult> OnGetDistrictsAsync(int id)
+        {
+            var districts = await _context.District
+                .Where(d => d.IdRegion == id)
+                .Select(d => new { d.idDistrict, d.intitule })
+                .ToListAsync();
+
+            return new JsonResult(districts);
+        }
+
+
 
         public async Task<IActionResult> OnPostUpdateAsync()
         {   
             var regionDb = await _context.Region.FindAsync(Region.idRegion);
             if (regionDb == null) return NotFound();
             regionDb.intitule = Region.intitule;
-            regionDb.latitude = Region.latitude;
-            regionDb.longitude = Region.longitude;
             regionDb.totalPopulationRegion=Region.totalPopulationRegion;
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
@@ -135,24 +134,31 @@ namespace Avaratra.BackOffice.Pages_Regions
             return RedirectToPage("./Index");
         }
 
-        public async Task<IActionResult> OnPostDeleteSelectedAsync([FromBody] int[] ids)
+        public async Task<IActionResult> OnPostDeleteSelectedAsync(List<int> ids)
         {
+            if (ids == null || !ids.Any())
+                return BadRequest(new { error = "Aucun ID reçu." });
+
             var regions = _context.Region.Where(r => ids.Contains(r.idRegion));
             _context.Region.RemoveRange(regions);
             await _context.SaveChangesAsync();
 
             return new JsonResult(new { success = true });
         }
+    
 
         public async Task<IActionResult> OnPostValidateSelectedAsync([FromBody] List<int> ids)
         {
-            // if (ids == null || ids.Count == 0) return BadRequest();
+            if (ids == null || !ids.Any())
+                return BadRequest(new { error = "Aucun ID reçu." });
+
             var regions = _context.Region.Where(r => ids.Contains(r.idRegion));
             foreach (var region in regions)
             {
-                region.etat = 5; // ou autre valeur de validation
+                region.etat = 5; // validé
             }
             await _context.SaveChangesAsync();
+
             return new JsonResult(new { success = true });
         }
 
@@ -160,55 +166,78 @@ namespace Avaratra.BackOffice.Pages_Regions
         {
             if (csvFile == null || csvFile.Length == 0)
             {
-                ModelState.AddModelError(string.Empty, "Aucun fichier sélectionné.");
+                TempData["Erreur"] = "Aucun fichier sélectionné.";
                 return Page();
             }
-            using var reader = new StreamReader(csvFile.OpenReadStream(), Encoding.UTF8);
 
-            // Lire et ignorer la première ligne (en-tête)
-            var header = await reader.ReadLineAsync();
-            Console.WriteLine($"Header ignoré: {header}");
-            var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-            while (!reader.EndOfStream)
+            if (Path.GetExtension(csvFile.FileName).ToLower() != ".csv")
             {
-                var line = await reader.ReadLineAsync();
-                Console.WriteLine($"Ligne lue: {line}");
-                if (string.IsNullOrWhiteSpace(line)) continue;
-
-                var values = line.Split(',');
-                if (values.Length < 5) continue;
-                var intitule = values[0].Trim();
-                var latitude = decimal.Parse(values[1].Trim(), CultureInfo.InvariantCulture);
-                var longitude = decimal.Parse(values[2].Trim(), CultureInfo.InvariantCulture);
-                var population = int.Parse(values[3].Trim(), CultureInfo.InvariantCulture);
-                var etat = int.Parse(values[4].Trim(), CultureInfo.InvariantCulture);
-
-                var region = new Region
-                {
-                    intitule = intitule,
-                    latitude = latitude,
-                    longitude = longitude,
-                    totalPopulationRegion = population,
-                    etat = etat,
-                    geometrie = geometryFactory.CreatePoint(new Coordinate((double)longitude, (double)latitude))
-                };
-
-                // Vérifier si la région existe déjà
-                bool exists = await _context.Region.AnyAsync(r => r.intitule == intitule);
-                if (!exists)
-                {
-                    _context.Region.Add(region);
-                }
+                TempData["Erreur"] = "Le fichier doit être au format CSV.";
+                return Page();
             }
+
+            var importer = new CsvImporter<Region>(RegionCsvMapperService.Map);
+            var (regions, errors) = await importer.ImportAsync(csvFile.OpenReadStream());
+
+            foreach (var region in regions)
+            {
+                if (!await _context.Region.AnyAsync(r => r.intitule == region.intitule))
+                    _context.Region.Add(region);
+                else
+                    errors.Add($"Région '{region.intitule}' déjà existante.");
+            }
+
+            if (errors.Any())
+            {
+                TempData["Erreur"] = string.Join("<br/>", errors);
+                return Page();
+            }
+
             await _context.SaveChangesAsync();
-            TempData["Message"] = "Import terminé avec succès.";
+            TempData["Succes"] = "Import terminé avec succès.";
             return RedirectToPage();
         }
+
 
         public async Task<List<Region>> GetRegionsValideesAsync() { 
             return await _context.Region 
                 .Where(r => r.etat == 5) .OrderBy(r => r.intitule) .ToListAsync(); 
         }
+
+
+       public async Task<IActionResult> OnGetExportPdfAsync(int id)
+        {
+            var region = await _context.Region
+                .Include(r => r.Districts)
+                .FirstOrDefaultAsync(r => r.idRegion == id);
+
+            if (region == null)
+                return NotFound();
+
+            var districts = region.Districts
+                .Select(d => (d.intitule, d.totalPopulationDistrict))
+                .ToList();
+
+            var pdfBytes = PdfReportGeneratorService.GenerateRegionReport(region.intitule, region.totalPopulationRegion, districts);
+
+            return File(pdfBytes, "application/pdf", $"Region_{region.intitule}.pdf");
+        }
+
+        public async Task<IActionResult> OnGetExportAllPdfAsync(string search)
+        {
+            // Récupérer les régions filtrées selon la recherche
+            var query = _context.Region.Include(r => r.Districts).AsQueryable();
+            var regions = await query.ToListAsync();
+
+            if (!regions.Any())
+                return NotFound();
+
+            // Générer le PDF
+            var pdfBytes = PdfReportGeneratorService.GenerateRegionsListReport(regions);
+
+            return File(pdfBytes, "application/pdf", "Regions_Report.pdf");
+        }
+
     }
     
 }

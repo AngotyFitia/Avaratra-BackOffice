@@ -46,9 +46,6 @@ namespace Avaratra.BackOffice.Migrations
                     id_region = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     intitule = table.Column<string>(type: "varchar(255)", nullable: false),
-                    latitude = table.Column<decimal>(type: "decimal(9,6)", nullable: false),
-                    longitude = table.Column<decimal>(type: "decimal(9,6)", nullable: false),
-                    geometrie = table.Column<Point>(type: "geography", nullable: false),
                     total_population_region = table.Column<int>(type: "int", nullable: false),
                     etat = table.Column<int>(type: "int", nullable: false)
                 },
