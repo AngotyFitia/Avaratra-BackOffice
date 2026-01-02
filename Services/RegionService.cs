@@ -2,9 +2,9 @@ using Avaratra.BackOffice.Models;
 using System.IO;
 using System.Globalization;
 
-namespace Avaratra.BackOffice.Services.Importing
+namespace Avaratra.BackOffice.Services
 {
-    public static class RegionCsvMapperService
+    public static class RegionService
     {
         public static (Region? entity, string? error) Map(string[] values, int lineNumber)
         {

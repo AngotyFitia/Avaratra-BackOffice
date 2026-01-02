@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Avaratra.BackOffice.Models;
 
-namespace Avaratra.BackOffice.Services.Exporting
+namespace Avaratra.BackOffice.Utils
 {
-    public static class PdfReportService
+    public static class PdfGenerator
     {
         // Fonts réutilisables
         private static readonly Font TitleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18, new BaseColor(0, 51, 102));

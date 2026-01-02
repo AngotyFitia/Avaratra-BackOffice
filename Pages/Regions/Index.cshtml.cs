@@ -15,8 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Avaratra.BackOffice.Utils;
-using Avaratra.BackOffice.Services.Exporting;
-using Avaratra.BackOffice.Services.Importing;
+using Avaratra.BackOffice.Services;
 
 namespace Avaratra.BackOffice.Pages_Regions
 {
@@ -170,7 +169,7 @@ namespace Avaratra.BackOffice.Pages_Regions
                 return Page();
             }
 
-            var importer = new CsvImporter<Region>(RegionCsvMapperService.Map);
+            var importer = new CsvImporter<Region>(RegionService.Map);
             var (regions, errors) = await importer.ImportAsync(csvFile.OpenReadStream());
 
             foreach (var region in regions)
@@ -221,7 +220,7 @@ namespace Avaratra.BackOffice.Pages_Regions
                 .ToList();
 
 
-            var pdfBytes = PdfReportService.GenerateEntityReport(
+            var pdfBytes = PdfGenerator.GenerateEntityReport(
                 "Région",
                 region.intitule,
                 region.totalPopulationRegion ?? 0,
@@ -258,7 +257,7 @@ namespace Avaratra.BackOffice.Pages_Regions
             if (!regions.Any())
                 return NotFound();
 
-            var pdf = PdfReportService.GenerateEntitiesListReport(
+            var pdf = PdfGenerator.GenerateEntitiesListReport(
                 "région",
                 regions,
                 r => r.intitule,

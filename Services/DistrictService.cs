@@ -3,7 +3,7 @@ using NetTopologySuite;
 using NetTopologySuite.Geometries;
 using System.Globalization;
 
-namespace Avaratra.BackOffice.Services.Importing
+namespace Avaratra.BackOffice.Services
 {
     public static class DistrictService
     {

@@ -13,8 +13,7 @@ using NetTopologySuite.Geometries;
 using System.IO;
 using System.Text;
 using System.Globalization;
-using Avaratra.BackOffice.Services.Exporting;
-using Avaratra.BackOffice.Services.Importing;
+using Avaratra.BackOffice.Services;
 
 namespace Avaratra.BackOffice.Pages_Districts
 {
@@ -230,7 +229,7 @@ namespace Avaratra.BackOffice.Pages_Districts
             return RedirectToPage();
         }
         
-       public async Task<IActionResult> OnGetExportPdfAsync(int id)
+        public async Task<IActionResult> OnGetExportPdfAsync(int id)
         {
             var district = await _context.District
                 .Include(d => d.Communes)
@@ -244,7 +243,7 @@ namespace Avaratra.BackOffice.Pages_Districts
                 .Select(c => (c.intitule, c.nombrePopulation))
                 .ToList();
             var totalPopulationDistrict = communes.Sum(c => c.nombrePopulation);
-            var pdfBytes = PdfReportService.GenerateEntityReport(
+            var pdfBytes = PdfGenerator.GenerateEntityReport(
                 "District",
                 district.intitule,
                 totalPopulationDistrict,
@@ -290,7 +289,7 @@ namespace Avaratra.BackOffice.Pages_Districts
             if (!districts.Any())
                 return NotFound();
 
-            var pdf = PdfReportService.GenerateEntitiesListReport(
+            var pdf = PdfGenerator.GenerateEntitiesListReport(
                 "district",
                 districts,
                 d => d.intitule,
