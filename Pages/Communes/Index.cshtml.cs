@@ -10,6 +10,10 @@ using Avaratra.BackOffice.Models;
 using Avaratra.BackOffice.Utils;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
+using ClosedXML.Excel;
+using System.Text.Json;
+
+
 
 namespace Avaratra.BackOffice.Pages_Communes
 {
@@ -45,37 +49,39 @@ namespace Avaratra.BackOffice.Pages_Communes
         [BindProperty(SupportsGet = true)]
         public int? Etat { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int PageSize { get; set; } = 2;
+
         public async Task<IActionResult> OnGetAsync(int? id, int? pageIndex)
         {
             if (id == null)
             {
-            const int pageSize = 2;
-            var query = _context.Commune.Include(c => c.District).ThenInclude(d => d.Region).AsQueryable();
-            if (!string.IsNullOrWhiteSpace(SearchIntitule))
-            query = query.Where(c => c.intitule.Contains(SearchIntitule));
-            if (!string.IsNullOrWhiteSpace(SearchRegion))
-                query = query.Where(c => c.District.Region.intitule.Contains(SearchRegion));
+                var query = _context.Commune.Include(c => c.District).ThenInclude(d => d.Region).AsQueryable();
+                if (!string.IsNullOrWhiteSpace(SearchIntitule))
+                query = query.Where(c => c.intitule.Contains(SearchIntitule));
+                if (!string.IsNullOrWhiteSpace(SearchRegion))
+                    query = query.Where(c => c.District.Region.intitule.Contains(SearchRegion));
 
-            if (!string.IsNullOrWhiteSpace(SearchDistrict))
-                query = query.Where(c => c.District.intitule.Contains(SearchDistrict));
+                if (!string.IsNullOrWhiteSpace(SearchDistrict))
+                    query = query.Where(c => c.District.intitule.Contains(SearchDistrict));
 
-            if (MinPopulation.HasValue)
-                query = query.Where(c => c.nombrePopulation >= MinPopulation.Value);
+                if (MinPopulation.HasValue)
+                    query = query.Where(c => c.nombrePopulation >= MinPopulation.Value);
 
-            if (MaxPopulation.HasValue)
-                query = query.Where(c => c.nombrePopulation <= MaxPopulation.Value);
+                if (MaxPopulation.HasValue)
+                    query = query.Where(c => c.nombrePopulation <= MaxPopulation.Value);
 
-            if (Etat.HasValue)
-                query = query.Where(c => c.etat == Etat.Value);
+                if (Etat.HasValue)
+                    query = query.Where(c => c.etat == Etat.Value);
 
-            query = query.OrderBy(r => r.intitule);
-            Communes = await PaginatedList<Commune>.CreateAsync(query, pageIndex ?? 1, pageSize);
+                query = query.OrderBy(r => r.intitule);
+                Communes = await PaginatedList<Commune>.CreateAsync(query, pageIndex ?? 1, PageSize);
 
-            // Récupération des régions validées
-            DistrictsValides = await _context.District
-                                            .Where(r => r.etat == 5)
-                                            .OrderBy(r => r.intitule)
-                                            .ToListAsync();
+                // Récupération des régions validées
+                DistrictsValides = await _context.District
+                                                .Where(r => r.etat == 5)
+                                                .OrderBy(r => r.intitule)
+                                                .ToListAsync();
             }
             var commune = await _context.Commune.FirstOrDefaultAsync(m => m.idCommune == id);
 
@@ -85,20 +91,26 @@ namespace Avaratra.BackOffice.Pages_Communes
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            Console.WriteLine(Commune.IdDistrict);
-            Commune.latitude = Convert.ToDecimal(Request.Form["Commune.latitude"], System.Globalization.CultureInfo.InvariantCulture);
-            Commune.longitude = Convert.ToDecimal(Request.Form["Commune.longitude"], System.Globalization.CultureInfo.InvariantCulture);
-
             if (!ModelState.IsValid){
                 ViewData["ShowCreateModal"] = true;
+                 DistrictsValides = await _context.District
+                                            .Where(r => r.etat == 5)
+                                            .OrderBy(r => r.intitule)
+                                            .ToListAsync();
                 return Page();
+            }else{
+
+                Console.WriteLine(Commune.IdDistrict);
+                Commune.latitude = Convert.ToDecimal(Request.Form["Commune.latitude"], System.Globalization.CultureInfo.InvariantCulture);
+                Commune.longitude = Convert.ToDecimal(Request.Form["Commune.longitude"], System.Globalization.CultureInfo.InvariantCulture);
+
+                var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+                Commune.geometrie = geometryFactory.CreatePoint(new Coordinate((double)Commune.longitude, (double)Commune.latitude));
+                Commune.etat = 0;
+                _context.Commune.Add(Commune);
+                await _context.SaveChangesAsync();
+                return RedirectToPage("./Index");
             }
-            var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-            Commune.geometrie = geometryFactory.CreatePoint(new Coordinate((double)Commune.longitude, (double)Commune.latitude));
-            Commune.etat = 0;
-            _context.Commune.Add(Commune);
-            await _context.SaveChangesAsync();
-            return RedirectToPage("./Index");
         }
 
         public async Task<IActionResult> OnPostUpdateAsync()
@@ -137,9 +149,51 @@ namespace Avaratra.BackOffice.Pages_Communes
                 Console.WriteLine($"Après: {communeDb.District.totalPopulationDistrict}");
             }
             communeDb.etat = 5;
-
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
+        }
+
+        
+        // public async Task<IActionResult> OnPostExportExcel() { 
+        //     var communes = JsonSerializer.Deserialize<List<CommuneDto>>(CommunesJson);
+        //     Console.WriteLine("tonga ato excel");   
+        //     using var workbook = new XLWorkbook();
+        //     var ws = workbook.Worksheets.Add("Communes");
+
+        //     ws.Cell(1, 1).Value = "Nom";
+        //     ws.Cell(1, 2).Value = "Population";
+        //     ws.Cell(1, 3).Value = "District";
+        //     ws.Cell(1, 4).Value = "Région";
+        //     ws.Cell(1, 5).Value = "État";
+
+        //     int row = 2;
+        //     foreach (var c in communes)
+        //     {
+        //         ws.Cell(row, 1).Value = c.Intitule;
+        //         ws.Cell(row, 2).Value = c.Population;
+        //         ws.Cell(row, 3).Value = c.District;
+        //         ws.Cell(row, 4).Value = c.Region;
+        //         ws.Cell(row, 5).Value = c.Etat;
+        //         row++;
+        //     }
+
+        //     ws.Columns().AdjustToContents();
+
+        //     using var stream = new MemoryStream();
+        //     workbook.SaveAs(stream);
+        //     return File(stream.ToArray(),
+        //         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        //         "Communes.xlsx");
+        // }
+
+        public class CommuneDto
+        {
+            public int Id{ get; set; }
+            public string Region { get; set; }
+            public string District { get; set; }
+            public string Intitule { get; set; }
+            public int Population { get; set; }
+            public string Etat { get; set; }
         }
 
     }

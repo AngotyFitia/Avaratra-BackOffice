@@ -34,10 +34,10 @@
       <input type="text" class="form-control form-control-sm" placeholder="Communes" name="SearchIntitule" >
     </div>
     <div class="col-md-2">
-      <input type="number" class="form-control form-control-sm" placeholder="Min pop." name="MinPopulation">
+      <input type="number" class="form-control form-control-sm" placeholder="Min population" name="MinPopulation">
     </div>
     <div class="col-md-2">
-      <input type="number" class="form-control form-control-sm" placeholder="Max pop." name="MaxPopulation">
+      <input type="number" class="form-control form-control-sm" placeholder="Max population" name="MaxPopulation">
     </div>
     <div class="col-md-2">
       <select class="form-select form-select-sm" name="Etat">
@@ -46,9 +46,12 @@
         <option value="5" selected="@(Model.Etat == 5)">Validé</option>
       </select>
     </div>
-    <div class="col-md-2 d-flex align-items-end">
-      <button type="submit" class="btn btn-inverse-secondary btn-fw w-100">
+    <div class="col-md-2 d-flex align-items-end" style="margin-left: 900px">
+      <button type="submit" class="btn btn-inverse-secondary">
         <i class="icon-search"></i>
+      </button>
+      <button type="button" class="btn btn-inverse-secondary" style="margin-left:10px" onclick="window.location.href='/Regions'">
+        <i class="mdi mdi-refresh"></i>
       </button>
     </div>
   </div>
@@ -59,6 +62,10 @@
 <div class="d-flex justify-content-end mb-2 gap-2">
     <button type="button" class="btn btn-inverse-danger btn-fw" id="deleteAllBtn" >Tout supprimer</button>
     <button type="button" class="btn btn-inverse-success btn-fw" id="validateAllBtn" >Valider tout</button>
+    <button type="button" class="btn btn-success" onclick="exportSelectedCommunes()">
+    <i class="mdi mdi-file-excel"></i> Exporter sélection
+</button>
+
 </div>
 
 <table class="table table-hover align-middle" >
@@ -66,7 +73,7 @@
         <tr>
             <th scope="col" class="text-center"> <input type="checkbox" id="selectAll"></th>
             <th class="text-center">Région</th>
-            <th class="text-start">District</th>
+            <th class="text-center">District</th>
             <th class="text-center">Commune</th>
             <th class="text-center">Nombre de population</th>
             <th class="text-center">Etat</th>
@@ -80,22 +87,65 @@
                 <td class="text-center"><input type="checkbox" class="rowCheckbox" data-id="@item.idCommune"/></td>
                 <td class="text-center">@item.District.Region.intitule </td>
                 <td class="text-center">@item.District.intitule </td>
-                <td class="text-start"style="word-wrap: break-word; width: 250px;  white-space: normal;" >@item.intitule</td>
+                <td class="text-center"style="word-wrap: break-word; width: 250px;  white-space: normal;" >@item.intitule</td>
                 <td class="text-center">@item.nombrePopulation</td>
                 <td class="text-center"><span class="@item.EtatCssClass">@item.EtatText</span></td>
-                <td>
-                <button type="button" class="btn btn-inverse-warning btn-xs custom-width" style="@item.DisplayCrudButtons"  data-bs-toggle="modal"  data-bs-target="#editModal" data-id="@item.idCommune" data-name="@item.intitule" data-pop="@item.nombrePopulation" data-discrict-id="@item.IdDistrict"><i class="mdi mdi-pen"></i></button>
-                <button type="button" class="btn btn-inverse-danger btn-xs custom-width" style="@item.DisplayCrudButtons" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-delete"></i></button>
-                <button type="button" class="btn btn-inverse-success btn-xs custom-width" style="@item.DisplayCrudButtons" data-bs-toggle="modal" data-bs-target="#validateModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-check"></i></button>
-                <button type="button" class="btn btn-inverse-primary btn-xs custom-width" style="@item.DisplaySpecialValidation" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-eye"></i></button>
+                <td class="text-center">
+                  <button type="button" class="btn btn-inverse-warning btn-xs custom-width" style="@item.DisplayCrudButtons"  data-bs-toggle="modal"  data-bs-target="#editModal" data-id="@item.idCommune" data-name="@item.intitule" data-pop="@item.nombrePopulation" data-discrict-id="@item.IdDistrict"><i class="mdi mdi-pen"></i></button>
+                  <button type="button" class="btn btn-inverse-danger btn-xs custom-width" style="@item.DisplayCrudButtons" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-delete"></i></button>
+                  <button type="button" class="btn btn-inverse-success btn-xs custom-width" style="@item.DisplayCrudButtons" data-bs-toggle="modal" data-bs-target="#validateModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-check"></i></button>
+                  @* <button type="button" class="btn btn-inverse-primary btn-xs custom-width" style="@item.DisplaySpecialValidation" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-eye"></i></button> *@
+                  <a asp-page-handler="ExportPdf" asp-route-id="@item.idCommune" style="@item.DisplaySpecialValidation" class="btn btn-inverse-secondary btn-xs custom-width"><i class="mdi mdi-file-excel  "></i></a>
+                </td>
+            </tr>
+        }
+    </tbody><tbody>
+        @foreach (var item in Model.Communes)
+        {
+            <tr>
+                <td class="text-center"><input type="checkbox" class="rowCheckbox" data-id="@item.idCommune"/></td>
+                <td class="text-center">@item.District.Region.intitule </td>
+                <td class="text-center">@item.District.intitule </td>
+                <td class="text-center"style="word-wrap: break-word; width: 250px;  white-space: normal;" >@item.intitule</td>
+                <td class="text-center">@item.nombrePopulation</td>
+                <td class="text-center"><span class="@item.EtatCssClass">@item.EtatText</span></td>
+                <td class="text-center">
+                  <button type="button" class="btn btn-inverse-warning btn-xs custom-width" style="@item.DisplayCrudButtons"  data-bs-toggle="modal"  data-bs-target="#editModal" data-id="@item.idCommune" data-name="@item.intitule" data-pop="@item.nombrePopulation" data-discrict-id="@item.IdDistrict"><i class="mdi mdi-pen"></i></button>
+                  <button type="button" class="btn btn-inverse-danger btn-xs custom-width" style="@item.DisplayCrudButtons" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-delete"></i></button>
+                  <button type="button" class="btn btn-inverse-success btn-xs custom-width" style="@item.DisplayCrudButtons" data-bs-toggle="modal" data-bs-target="#validateModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-check"></i></button>
+                  @* <button type="button" class="btn btn-inverse-primary btn-xs custom-width" style="@item.DisplaySpecialValidation" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="@item.idCommune" data-name="@item.intitule"><i class="mdi mdi-eye"></i></button> *@
+                  <a asp-page-handler="ExportExcel" asp-route-id="@item.idCommune" style="@item.DisplaySpecialValidation" class="btn btn-inverse-secondary btn-xs custom-width"><i class="mdi mdi-file-excel  "></i></a>
                 </td>
             </tr>
         }
     </tbody>
 </table>
 
+<div class="d-flex justify-content-between align-items-center mb-4">
+<form method="get" class="d-flex align-items-center">
+    <div class="d-flex align-items-center"> 
+    <label for="pageSize" class="me-2">Afficher :</label> 
+    <select class="form-select d-inline-block w-auto"  id="pageSize"  name="PageSize" onchange="this.form.submit()">> 
+        <option value="1" selected="@(Model.PageSize == 1)">5</option>
+        <option value="15" selected="@(Model.PageSize == 15)">15</option>
+        <option value="101" selected="@(Model.PageSize == 101)">20</option>
+    </select> 
+    <span class="ms-2">par page</span>
+      <input type="number" id="customPageSize" name="PageSize" style="display:none;" min="1" max="100">
+    </div> 
+    <input type="hidden" name="pageIndex" value="1" />
+    <input type="hidden" name="SearchIntitule" value="@(Model.SearchIntitule)" />
+    <input type="hidden" name="MinPopulation" value="@(Model.MinPopulation)" />
+    <input type="hidden" name="MaxPopulation" value="@(Model.MaxPopulation)" />
+    <input type="hidden" name="Etat" value="@(Model.Etat)" />
+  </form>
 <nav aria-label="Page navigation example" class="mt-3">
     <ul class="pagination justify-content-end">
+      <li class="page-item disabled">
+            <span class="page-link">
+                Page @Model.Communes.PageIndex / @Model.Communes.TotalPages
+            </span>
+        </li>
         @if (Model.Communes.HasPreviousPage)
         {
             <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Communes.PageIndex - 1)">Précédent</a></li>
@@ -106,10 +156,11 @@
         }
     </ul>
 </nav>
+</div>
 }else { 
-    <p class="text-center text-muted fw-bold mt-3">
-    <i class="mdi mdi-alert-circle-outline"></i> Aucune commune trouvée.</p>
-     }
+  <p class="text-center text-muted fw-bold mt-3">
+  <i class="mdi mdi-alert-circle-outline"></i> Aucune commune trouvée.</p>
+}
     
 <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -120,8 +171,12 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
       <div class="modal-body">
+        
         <div class="mb-2">
             <input type="text" class="form-control form-control-sm" id="regionName" placeholder="Commune" asp-for="Commune.intitule">
+        </div>
+        <div class="mb-2">
+          <div id="map" style="height: 300px;"></div>
         </div>
         <div class="form-group">
             <label for="exampleSelectGender">District</label> 
@@ -149,7 +204,18 @@
         <button type="button" class="btn btn-secondary btn" data-bs-dismiss="modal">Annuler</button>
         <button type="submit" class="btn btn-primary btn" id="saveRegionBtn">Enregistrer</button>
       </div>
-      <div asp-validation-summary="All" class="text-danger"></div>
+      @if (!ViewData.ModelState.IsValid)
+      {
+          <div class="alert alert-danger d-flex flex-column align-items-center mx-auto text-center" role="alert" style="border-radius:8px; font-weight:500;  max-width:450px;">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <div>
+                  @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                  {
+                    <div >@error.ErrorMessage</div>
+                  }
+              </div>
+          </div>
+      }
     </form>
     </div>
   </div>
@@ -244,13 +310,49 @@
 
 @section Scripts {
     <script src="~/assets/js/personal/commune.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
     <script>
-        $(document).ready(function () {
-            var showModal = '@ViewData["ShowCreateModal"]';
-            if (showModal === 'True') {
-                var myModal = new bootstrap.Modal(document.getElementById('createModal'));
-                myModal.show();
-            }
+      $(document).ready(function () {
+          var showModal = '@ViewData["ShowCreateModal"]';
+          if (showModal === 'True') {
+              var myModal = new bootstrap.Modal(document.getElementById('createModal'));
+              myModal.show();
+          }
+      });
+    </script>
+    <script>
+      function exportSelectedCommunes() {
+        const rows = document.querySelectorAll(".rowCheckbox:checked");
+        const communes = [];
+
+        rows.forEach(row => {
+            const tr = row.closest("tr");
+            communes.push({
+                Id: parseInt(row.dataset.id),
+                Region: tr.children[1].innerText,
+                District: tr.children[2].innerText,
+                Intitule: tr.children[3].innerText,
+                Population: parseInt(tr.children[4].innerText),
+                Etat: tr.children[5].innerText
+            });
         });
+
+        // Envoi au serveur
+        const formData = new FormData();
+        formData.append("CommunesJson", JSON.stringify(communes));
+
+        fetch('/Communes/Index?handler=ExportExcel', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "Communes.xlsx";
+            a.click();
+        });
+      }
     </script>
 }

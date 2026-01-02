@@ -11,26 +11,32 @@ namespace Avaratra.BackOffice.Models
         [Column("id_commune")]
         public int idCommune { get; set; }
         
+        [Required(ErrorMessage = "La commune est obligatoire.")]
         [Column("id_district")] 
         public int IdDistrict { get; set; }
 
+        [Required(ErrorMessage = "La commune est obligatoire.")]
         [ValidateNever]
         [ForeignKey("IdDistrict")]
         public District District {get; set;}
 
+        [Required(ErrorMessage = "Le nom de la commune est obligatoire.")]
         [Column("intitule", TypeName = "varchar(255)")]
         public string intitule { get; set; } = string.Empty;
 
+        // [Required(ErrorMessage = "La latitude est obligatoire.")]
         [Column("latitude", TypeName = "decimal(9,6)")]
-        public decimal latitude { get; set; }
+        public decimal? latitude { get; set; }
 
+        // [Required(ErrorMessage = "La longitude est obligatoire.")]
         [Column("longitude", TypeName = "decimal(9,6)")]
-        public decimal longitude { get; set; }
+        public decimal? longitude { get; set; }
 
         [ValidateNever]
         [Column("geometrie", TypeName = "geography")]
         public Point geometrie { get; set; }
 
+        [Required(ErrorMessage = "Le nombre de population est obligatoire.")]
         [Column("nombre_population")]
         public int nombrePopulation { get; set; }
 
