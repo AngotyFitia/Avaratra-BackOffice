@@ -34,6 +34,12 @@ namespace Avaratra.BackOffice.Data
                 .HasForeignKey(d => d.IdRegion)       // clé étrangère
                 .HasPrincipalKey(r => r.idRegion);    // clé primaire
 
+            modelBuilder.Entity<Commune>()
+                .HasOne(d => d.District)                // une commune a un district
+                .WithMany(c => c.Communes)           // une district a plusieurs communnes
+                .HasForeignKey(d => d.IdDistrict)       // clé étrangère
+                .HasPrincipalKey(c => c.idDistrict); 
+
             modelBuilder.Entity<Mesure>()
                 .HasOne(m => m.Utilisateur)
                 .WithMany(u => u.mesures)

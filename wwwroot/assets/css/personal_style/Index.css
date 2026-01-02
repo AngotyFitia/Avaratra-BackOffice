@@ -59,3 +59,27 @@ table tbody td {
     cursor: pointer;
   }
   
+  .tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 12px;
+    pointer-events: none; /* pour ne pas bloquer la souris */
+    transform: translate(-50%, -100%); /* centré au-dessus du point */
+    display: none; /* caché par défaut */
+  }
+  #tooltip {
+    z-index: 1000;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    display: none;
+  }
+  #districtInfo { z-index: 1001; background: rgba(255,255,255,0.95); color: #222; padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; font-size: 13px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); display: none; transform: translate(-50%, -100%); min-width: 220px; }
+    

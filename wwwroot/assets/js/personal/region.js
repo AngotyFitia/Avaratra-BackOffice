@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", function () {
 // Position actuelle (géolocalisation)
 document.addEventListener("DOMContentLoaded", function () {
     const btnGetLocation = document.getElementById("btnGetLocation");
-
     if (btnGetLocation) {
         btnGetLocation.addEventListener("click", function () {
             if (navigator.geolocation) {

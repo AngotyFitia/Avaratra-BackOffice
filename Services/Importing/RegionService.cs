@@ -2,7 +2,8 @@ using Avaratra.BackOffice.Models;
 using System.IO;
 using System.Globalization;
 
-namespace Avaratra.BackOffice.Services{
+namespace Avaratra.BackOffice.Services.Importing
+{
     public static class RegionCsvMapperService
     {
         public static (Region? entity, string? error) Map(string[] values, int lineNumber)
@@ -22,7 +23,7 @@ namespace Avaratra.BackOffice.Services{
                 var region = new Region
                 {
                     intitule = intitule,
-                    totalPopulationRegion = population,
+                    totalPopulationRegion = 0,
                     etat = etat,
                 };
 

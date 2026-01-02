@@ -15,7 +15,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Avaratra.BackOffice.Utils;
-using Avaratra.BackOffice.Services;
+using Avaratra.BackOffice.Services.Exporting;
+using Avaratra.BackOffice.Services.Importing;
 
 namespace Avaratra.BackOffice.Pages_Regions
 {
@@ -25,12 +26,11 @@ namespace Avaratra.BackOffice.Pages_Regions
         public PaginatedList<Region> Regions { get; set; } = default!;
 
         [BindProperty]
-        public Region Region { get; set; } = default!; //une seule region
+        public Region Region { get; set; } = default!; 
 
         [BindProperty]
         public List<int> SelectedIds { get; set; } = new();
 
-        // recherche avancée 
         [BindProperty(SupportsGet = true)]
         public string? SearchIntitule { get; set; }
 
@@ -44,8 +44,7 @@ namespace Avaratra.BackOffice.Pages_Regions
         public int? Etat { get; set; }
 
         [BindProperty(SupportsGet = true)]
-        public int PageSize { get; set; } = 2;// valeur par défaut
-
+        public int PageSize { get; set; } = 2;
 
         public IndexModel(Avaratra.BackOffice.Data.ApplicationDbContext context)
         {
@@ -57,12 +56,14 @@ namespace Avaratra.BackOffice.Pages_Regions
             if (!ModelState.IsValid){
                 ViewData["ShowCreateModal"] = true;
                 return Page();
+            }else{
+                Region.etat = 0;
+                Region.totalPopulationRegion=0;
+                _context.Region.Add(Region);
+                TempData["Succes"] = $"Ajout terminé: Région {Region.intitule}.";
+                await _context.SaveChangesAsync();
+                return RedirectToPage("./Index");
             }
-            Region.etat = 0;
-            Region.totalPopulationRegion=0;
-            _context.Region.Add(Region);
-            await _context.SaveChangesAsync();
-            return RedirectToPage("./Index");
         }
 
         public async Task<IActionResult> OnGetAsync(int? id, int? pageIndex)
@@ -96,11 +97,8 @@ namespace Avaratra.BackOffice.Pages_Regions
                 .Where(d => d.IdRegion == id)
                 .Select(d => new { d.idDistrict, d.intitule })
                 .ToListAsync();
-
             return new JsonResult(districts);
         }
-
-
 
         public async Task<IActionResult> OnPostUpdateAsync()
         {   
@@ -127,8 +125,6 @@ namespace Avaratra.BackOffice.Pages_Regions
         public async Task<IActionResult> OnPostValidateAsync(int? id)
         {
             var regionDb = await _context.Region.FindAsync(id);
-            if (regionDb == null) return NotFound();
-
             regionDb.etat = 5;
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
@@ -146,7 +142,6 @@ namespace Avaratra.BackOffice.Pages_Regions
             return new JsonResult(new { success = true });
         }
     
-
         public async Task<IActionResult> OnPostValidateSelectedAsync([FromBody] List<int> ids)
         {
             if (ids == null || !ids.Any())
@@ -155,10 +150,9 @@ namespace Avaratra.BackOffice.Pages_Regions
             var regions = _context.Region.Where(r => ids.Contains(r.idRegion));
             foreach (var region in regions)
             {
-                region.etat = 5; // validé
+                region.etat = 5;
             }
             await _context.SaveChangesAsync();
-
             return new JsonResult(new { success = true });
         }
 
@@ -194,48 +188,86 @@ namespace Avaratra.BackOffice.Pages_Regions
             }
 
             await _context.SaveChangesAsync();
-            TempData["Succes"] = "Import terminé avec succès.";
+            await _context.SaveChangesAsync();
+            string regionWord = regions.Count <= 1 ? "région" : "régions";
+            string regionVerb = regions.Count <= 1 ? "importée" : "importées";
+            string errorWord = errors.Count <= 1 ? "erreur" : "erreurs";
+            TempData["Succes"] = $"Import terminé. {regions.Count} {regionWord} {regionVerb}, {errors.Count} {errorWord}.";
             return RedirectToPage();
         }
 
-
-        public async Task<List<Region>> GetRegionsValideesAsync() { 
+        public async Task<List<Region>> GetRegionsValideesAsync()
+        { 
             return await _context.Region 
                 .Where(r => r.etat == 5) .OrderBy(r => r.intitule) .ToListAsync(); 
         }
 
-
-       public async Task<IActionResult> OnGetExportPdfAsync(int id)
+        public async Task<IActionResult> OnGetExportPdfAsync(int id)
         {
             var region = await _context.Region
                 .Include(r => r.Districts)
+                    .ThenInclude(d => d.Communes)
                 .FirstOrDefaultAsync(r => r.idRegion == id);
 
             if (region == null)
                 return NotFound();
 
+            // Recalculer les populations des districts à partir des communes
             var districts = region.Districts
-                .Select(d => (d.intitule, d.totalPopulationDistrict))
+                .Select(d => (
+                    d.intitule,
+                    d.Communes?.Sum(c => c.nombrePopulation) ?? 0
+                ))
                 .ToList();
 
-            var pdfBytes = PdfReportGeneratorService.GenerateRegionReport(region.intitule, region.totalPopulationRegion, districts);
+
+            var pdfBytes = PdfReportService.GenerateEntityReport(
+                "Région",
+                region.intitule,
+                region.totalPopulationRegion ?? 0,
+                districts,
+                "Nom du district"
+            );
 
             return File(pdfBytes, "application/pdf", $"Region_{region.intitule}.pdf");
         }
 
-        public async Task<IActionResult> OnGetExportAllPdfAsync(string search)
-        {
-            // Récupérer les régions filtrées selon la recherche
-            var query = _context.Region.Include(r => r.Districts).AsQueryable();
+        public async Task<IActionResult> OnGetExportAllPdfAsync(string SearchIntitule, int? MinPopulation, int? MaxPopulation, int? Etat)
+        {   
+            var query = _context.Region
+                .Include(r => r.Districts)
+                .AsQueryable();
+            if (!string.IsNullOrWhiteSpace(SearchIntitule))
+            {
+                query = query.Where(r => r.intitule.Contains(SearchIntitule));
+                Console.WriteLine("misy search");
+            }
+            if (MinPopulation.HasValue)
+            {
+                query = query.Where(r => r.Districts.Sum(d => d.Communes.Sum(c => c.nombrePopulation)) >= MinPopulation.Value);
+            }
+            if (MaxPopulation.HasValue)
+            {
+                query = query.Where(r => r.Districts.Sum(d => d.Communes.Sum(c => c.nombrePopulation)) <= MaxPopulation.Value);
+            }
+            if (Etat.HasValue)
+            {
+                query = query.Where(r => r.Districts.Count >= Etat.Value);
+            }
             var regions = await query.ToListAsync();
-
             if (!regions.Any())
                 return NotFound();
 
-            // Générer le PDF
-            var pdfBytes = PdfReportGeneratorService.GenerateRegionsListReport(regions);
+            var pdf = PdfReportService.GenerateEntitiesListReport(
+                "région",
+                regions,
+                r => r.intitule,
+                r => r.Districts.Sum(d => d.Communes.Sum(c => c.nombrePopulation)),
+                r => r.Districts.Count,
+                "districts"
+            );
 
-            return File(pdfBytes, "application/pdf", "Regions_Report.pdf");
+            return File(pdf, "application/pdf", "Regions_Report.pdf");
         }
 
     }

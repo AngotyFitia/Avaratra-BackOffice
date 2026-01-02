@@ -11,11 +11,14 @@ namespace Avaratra.BackOffice.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int idRegion { get; set; }
 
+        [Required(ErrorMessage = "Le nom de la région est obligatoire.")]
         [Column("intitule", TypeName = "varchar(255)")]
-        public string intitule { get; set; } = string.Empty;
+        public string? intitule { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "Le nombre de population est obligatoire.")]
+        [Range(0, int.MaxValue, ErrorMessage = "La population doit être un nombre positif.")]
         [Column("total_population_region")]
-        public int totalPopulationRegion { get; set; }
+        public int? totalPopulationRegion { get; set; }
 
         [Column("etat")]
         public int etat { get; set; }

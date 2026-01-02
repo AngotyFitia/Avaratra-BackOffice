@@ -13,6 +13,8 @@ using NetTopologySuite.Geometries;
 using System.IO;
 using System.Text;
 using System.Globalization;
+using Avaratra.BackOffice.Services.Exporting;
+using Avaratra.BackOffice.Services.Importing;
 
 namespace Avaratra.BackOffice.Pages_Districts
 {
@@ -46,13 +48,16 @@ namespace Avaratra.BackOffice.Pages_Districts
         [BindProperty(SupportsGet = true)]
         public int? Etat { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int PageSize { get; set; } = 2;
+
         public async Task<IActionResult> OnGetAsync(int? id, int? pageIndex)
         {
             if (id == null)
             {
             const int pageSize = 2;
             var query = _context.District
-                                .Include(d => d.Region)   // jointure
+                                .Include(d => d.Region)
                                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(SearchIntitule))
@@ -66,7 +71,7 @@ namespace Avaratra.BackOffice.Pages_Districts
             if (Etat.HasValue)
                 query = query.Where(r => r.etat == Etat.Value);
             query = query.OrderBy(r => r.intitule);
-            Districts = await PaginatedList<District>.CreateAsync(query, pageIndex ?? 1, pageSize);
+            Districts = await PaginatedList<District>.CreateAsync(query, pageIndex ?? 1, PageSize);
 
             // Récupération des régions validées
             RegionsValidees = await _context.Region
@@ -74,31 +79,38 @@ namespace Avaratra.BackOffice.Pages_Districts
                                             .OrderBy(r => r.intitule)
                                             .ToListAsync();
             }
-            var ditrict = await _context.District   .Include(d => d.Communes) 
-                                                    .Include(d => d.Region) 
-                                                    .FirstOrDefaultAsync(d => d.idDistrict == id);
-
-            District= ditrict;
             return Page();
+        }
+
+        public JsonResult OnGetCommunes(int id)
+        {
+            var communes = _context.Commune
+                .Where(c => c.IdDistrict == id)
+                .Select(c => new { c.idCommune, c.intitule, c.latitude, c.longitude,c.nombrePopulation})
+                .ToList();
+            return new JsonResult(communes);
         }
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
             Console.WriteLine(District.IdRegion);
-            // District.latitude = Convert.ToDecimal(Request.Form["District.latitude"], System.Globalization.CultureInfo.InvariantCulture);
-            // District.longitude = Convert.ToDecimal(Request.Form["District.longitude"], System.Globalization.CultureInfo.InvariantCulture);
-
             if (!ModelState.IsValid){
+                RegionsValidees = await _context.Region
+                                            .Where(r => r.etat == 5)
+                                            .OrderBy(r => r.intitule)
+                                            .ToListAsync();
                 ViewData["ShowCreateModal"] = true;
                 return Page();
+            }else{
+                var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+                District.geometrie = geometryFactory.CreatePoint(new Coordinate(0, 0));            
+                District.totalPopulationDistrict = 0;
+                District.etat = 0;
+                _context.District.Add(District);
+                TempData["Succes"] = $"Nouveau district ajouté: District {District.intitule}.";
+                await _context.SaveChangesAsync();
+                return RedirectToPage("./Index");
             }
-            var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-            // District.geometrie = geometryFactory.CreatePoint(new Coordinate((double)District.longitude, (double)District.latitude));
-            District.geometrie = geometryFactory.CreatePoint(new Coordinate(0, 0));            
-            District.etat = 0;
-            _context.District.Add(District);
-            await _context.SaveChangesAsync();
-            return RedirectToPage("./Index");
         }
 
         public async Task<IActionResult> OnPostUpdateAsync()
@@ -129,15 +141,12 @@ namespace Avaratra.BackOffice.Pages_Districts
             var districtDb = await _context.District
                 .Include(d => d.Region) 
                 .FirstOrDefaultAsync(d => d.idDistrict == id);
-
-            if (districtDb == null) return NotFound();
-
+            
             districtDb.etat = 5;
             if (districtDb.Region != null)
             {
                 districtDb.Region.totalPopulationRegion += districtDb.totalPopulationDistrict;
             }
-
             await _context.SaveChangesAsync();
             return RedirectToPage("./Index");
         }
@@ -146,37 +155,35 @@ namespace Avaratra.BackOffice.Pages_Districts
         {
             var districtDb = await _context.District
                 .Include(d => d.Region)
-                .Include(d => d.Communes) // inclure les communes liées
+                .Include(d => d.Communes) // jointure pour prendre les communes liées
                 .FirstOrDefaultAsync(d => d.idDistrict == id);
 
             if (districtDb == null) return NotFound();
-
-            // 1. Changer l'état
             districtDb.etat = 10;
 
-            // 3. Construire la géométrie du district à partir des communes
+            // La géométrie du district à partir des communes
             var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
 
-            // Récupérer les points des communes
+            // récupération des points des communes
             var communePoints = districtDb.Communes
                 .Select(c => geometryFactory.CreatePoint(new Coordinate((double)c.longitude, (double)c.latitude)))
                 .ToArray();
 
             if (communePoints.Length > 0)
             {
-                // Exemple : créer un MultiPoint puis un polygone englobant
+                // Création d'un multiPoint puis un polygone englobant
                 var multiPoint = geometryFactory.CreateMultiPoint(communePoints);
-                districtDb.geometrie = multiPoint.ConvexHull(); // polygone englobant toutes les communes
+
+                // polygone englobant toutes les communes
+                districtDb.geometrie = multiPoint.ConvexHull(); 
             }
             else
             {
                 // Si pas de communes, garder un point neutre
                 districtDb.geometrie = geometryFactory.CreatePoint(new Coordinate(0, 0));
             }
-
             _context.Update(districtDb);
             await _context.SaveChangesAsync();
-
             return RedirectToPage("./Index");
         }
 
@@ -184,63 +191,114 @@ namespace Avaratra.BackOffice.Pages_Districts
         {
             if (csvFile == null || csvFile.Length == 0)
             {
-                ModelState.AddModelError(string.Empty, "Aucun fichier sélectionné.");
-                return Page();
+                TempData["Erreur"] = "Aucun fichier sélectionné.";
+                return RedirectToPage();
             }
-            using var reader = new StreamReader(csvFile.OpenReadStream(), Encoding.UTF8);
-
-            var header = await reader.ReadLineAsync();
-            Console.WriteLine($"Header ignoré: {header}");
-
-            var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-
-            while (!reader.EndOfStream)
+            if (Path.GetExtension(csvFile.FileName).ToLower() != ".csv")
             {
-                var line = await reader.ReadLineAsync();
-                if (string.IsNullOrWhiteSpace(line)) continue;
+                TempData["Erreur"] = "Le fichier doit être au format CSV.";
+                return RedirectToPage();
+            }
+            var importer = new CsvImporter<District>(DistrictService.Map);
+            var (districts, errors) = await importer.ImportAsync(csvFile.OpenReadStream());
 
-                var values = line.Split(',');
-                if (values.Length < 6) continue;
-
-                var districtName = values[0].Trim();
-                var regionName   = values[1].Trim();
-                var longitude    = decimal.Parse(values[2].Trim(), CultureInfo.InvariantCulture);
-                var latitude     = decimal.Parse(values[3].Trim(), CultureInfo.InvariantCulture);
-                var population   = int.Parse(values[4].Trim(), CultureInfo.InvariantCulture);
-                var etat         = int.Parse(values[5].Trim(), CultureInfo.InvariantCulture);
-
-                // Chercher la région existante
-                var region = await _context.Region.FirstOrDefaultAsync(r => r.intitule == regionName);
-                if (region == null)
-                {
-                    // Si la région n’existe pas, on peut ignorer ou lever une erreur
-                    Console.WriteLine($"Région '{regionName}' introuvable, district '{districtName}' ignoré.");
+            foreach (var district in districts){
+                var region = await _context.Region.FirstOrDefaultAsync(r => r.intitule == district.TagRegion);
+                if(region == null){
+                    errors.Add($"Région: '{district.TagRegion}' absente. Importez les régions avant les districts.");
                     continue;
                 }
-
-                // Vérifier si le district existe déjà
-                bool existsDistrict = await _context.District.AnyAsync(d => d.intitule == districtName && d.IdRegion == region.idRegion);
-                if (!existsDistrict)
-                {
-                    var district = new District
-                    {
-                        intitule = districtName,
-                        IdRegion = region.idRegion,
-                        // latitude = latitude,
-                        // longitude = longitude,
-                        totalPopulationDistrict = population,
-                        etat = etat,
-                        geometrie = geometryFactory.CreatePoint(new Coordinate(0, 0))
-                    };
-
+                bool existDistrict = await _context.District
+                                    .AnyAsync(d => d.intitule == district.intitule && d.IdRegion == region.idRegion);
+                if(!existDistrict){
+                    district.IdRegion = region.idRegion;
                     _context.District.Add(district);
+                }else{
+                    errors.Add($"District: 'Le {district.intitule} de la région {region.intitule}' existe déjà.");
                 }
             }
-
+            if (errors.Any())
+            {
+                TempData["Erreur"] = string.Join("<br/>", errors);
+                return RedirectToPage();
+            }
             await _context.SaveChangesAsync();
-            TempData["Message"] = "Import des districts terminé avec succès.";
+            string districtWord = districts.Count <= 1 ? "district" : "districts";
+            string districtVerb = districts.Count <= 1 ? "importé" : "importés";
+            string errorWord = errors.Count <= 1 ? "erreur" : "erreurs";
+            TempData["Succes"] = $"Import terminé. {districts.Count} {districtWord} {districtVerb}, {errors.Count} {errorWord}.";
             return RedirectToPage();
         }
         
+       public async Task<IActionResult> OnGetExportPdfAsync(int id)
+        {
+            var district = await _context.District
+                .Include(d => d.Communes)
+                .FirstOrDefaultAsync(d => d.idDistrict == id);
+
+            if (district == null)
+                return NotFound();
+
+            // Liste des communes avec leur population
+            var communes = district.Communes
+                .Select(c => (c.intitule, c.nombrePopulation))
+                .ToList();
+            var totalPopulationDistrict = communes.Sum(c => c.nombrePopulation);
+            var pdfBytes = PdfReportService.GenerateEntityReport(
+                "District",
+                district.intitule,
+                totalPopulationDistrict,
+                communes,
+                "commune"
+            );
+
+            return File(pdfBytes, "application/pdf", $"District_{district.intitule}.pdf");
+        }
+
+        public async Task<IActionResult> OnGetExportAllPdfAsync(string SearchIntitule, string searchRegion, int? MinPopulation, int? MaxPopulation, int? Etat)
+        {   
+            var query = _context.District
+                .Include(d => d.Communes)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(SearchIntitule))
+            {
+                query = query.Where(d => d.intitule.Contains(SearchIntitule));
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchRegion))
+            {
+                query = query.Where(d => d.Region.intitule.Contains(searchRegion));
+            }
+
+            if (MinPopulation.HasValue)
+            {
+                query = query.Where(d => d.Communes.Sum(c => c.nombrePopulation) >= MinPopulation.Value);
+            }
+
+            if (MaxPopulation.HasValue)
+            {
+                query = query.Where(d => d.Communes.Sum(c => c.nombrePopulation) <= MaxPopulation.Value);
+            }
+
+            if (Etat.HasValue)
+            {
+                query = query.Where(d => d.Communes.Count >= Etat.Value);
+            }
+
+            var districts = await query.ToListAsync();
+            if (!districts.Any())
+                return NotFound();
+
+            var pdf = PdfReportService.GenerateEntitiesListReport(
+                "district",
+                districts,
+                d => d.intitule,
+                d => d.Communes.Sum(c => c.nombrePopulation),
+                d => d.Communes.Count,
+                "communes"
+            );
+            return File(pdf, "application/pdf", "Districts_Report.pdf");
+        }
     }
 }

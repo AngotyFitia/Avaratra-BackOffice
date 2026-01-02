@@ -5,9 +5,23 @@
     ViewData["Title"] = "Districts";
 }
 @section Styles {
-    <link rel="stylesheet" href="~/css/personal_style/Index.css" />
-    <link rel="stylesheet" href="~/css.ol.css" />
+     <link rel="stylesheet" href="~/assets/css/personal_style/Index.css" />
+    <link rel="stylesheet" href="~/assets/css/ol.css" />
+    <style>
+      #tooltip {
+        z-index: 1000;
+        background: rgba(0,0,0,0.75);
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        pointer-events: none;
+        display: none;
+      }
+    </style>
+
 }
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h3 class="mb-1">Districts</h3>
@@ -15,13 +29,20 @@
     </div>
     <div class="d-flex gap-2">
     <form method="post" asp-page="Index" enctype="multipart/form-data" asp-page-handler="ImportCsv" >
-        <input type="file" id="csvFileInput" name="csvFile" accept=".csv" style="display:none" />
+        <input type="file" id="csvFileInput" name="csvFile" style="display:none" />
         <button type="submit" class="btn btn-inverse-success btn-fw" id="btnImportCsv"><i class="mdi mdi-file-import"></i> Import csv</button>
         <a asp-page="Create" class="btn btn-inverse-primary btn-fw" data-bs-toggle="modal" data-bs-target="#createModal"><i class="icon-plus"></i> Nouveau district</a>
-        @* @if (TempData["Message"] != null)
+        @if (TempData["Succes"] != null || TempData["Erreur"] != null)
         {
-            <div class="alert alert-success">@TempData["Message"]</div>
-        } *@
+          <div class="toast-container">
+            <div id="liveToast" class="toast-custom @(TempData["Succes"] != null ? "toast-success" : "toast-error")" role="alert">
+                <div class="toast-body">
+                    @Html.Raw(TempData["Succes"] ?? TempData["Erreur"])
+                </div>
+                <button type="button" class="toast-close" onclick="hideToast()">×</button>
+            </div>
+          </div>  
+        }
     </form>
     </div>
 </div>
@@ -48,39 +69,43 @@
       </select>
     </div>
     <div class="col-md-2 d-flex align-items-end">
-      <button type="submit" class="btn btn-inverse-secondary btn-fw w-100">
+      <button type="submit" class="btn btn-inverse-secondary">
         <i class="icon-search"></i>
+      </button>
+      <button type="button" class="btn btn-inverse-secondary" style="margin-left:10px" onclick="window.location.href='/Districts'">
+        <i class="mdi mdi-refresh"></i>
       </button>
     </div>
   </div>
 </form>
+
 <hr />
 @if (Model.Districts != null && Model.Districts.Any()){
-<div class="d-flex justify-content-end mb-2 gap-2">
-    <button type="button" class="btn btn-inverse-danger btn-fw" id="deleteAllBtn" >Tout supprimer</button>
-    <button type="button" class="btn btn-inverse-success btn-fw" id="validateAllBtn" >Valider tout</button>
-</div>
+  <div class="d-flex justify-content-end mb-2 gap-2">
+      <button type="button" class="btn btn-inverse-danger btn-fw" id="deleteAllBtn" >Tout supprimer</button>
+      <button type="button" class="btn btn-inverse-success btn-fw" id="validateAllBtn" >Valider tout</button>
+      <a asp-page-handler="ExportAllPdf" asp-route-SearchIntitule="@Model.SearchIntitule" asp-route-SearchRegion="@Model.SearchRegion" asp-route-MinPopulation="@Model.MinPopulation" asp-route-MaxPopulation="@Model.MaxPopulation" class="btn btn-inverse-secondary btn-fw">Exporter PDF</a>
 
-<table class="table table-hover align-middle" >
-    <thead class="table-light">
-        <tr>
-            <th scope="col" class="text-center"> <input type="checkbox" id="selectAll"></th>
-            <th class="text-start">District</th>
-            <th class="text-center">Région</th>
-            @* <th class="text-center">Géométrie</th> *@
-            <th class="text-center">Total population</th>
-            <th class="text-center">Etat</th>
-            <th class="text-center">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Districts)
-        {
+  </div>
+
+  <table class="table table-hover align-middle" >
+      <thead class="table-light">
+          <tr>
+              <th scope="col" class="text-center"> <input type="checkbox" id="selectAll"></th>
+              <th class="text-start">District</th>
+              <th class="text-center">Région</th>
+              <th class="text-center">Total population</th>
+              <th class="text-center">Etat</th>
+              <th class="text-center">Actions</th>
+          </tr>
+      </thead>
+      <tbody>
+          @foreach (var item in Model.Districts)
+          {
             <tr>
                 <td class="text-center"><input type="checkbox" class="rowCheckbox" data-id="@item.idDistrict"/></td>
                 <td class="text-start"style="word-wrap: break-word; width: 250px;  white-space: normal;" >@item.intitule</td>
                 <td class="text-center">@item.Region.intitule </td>
-                @* <td class="text-center">@item.geometrie </td> *@
                 <td class="text-center">@item.totalPopulationDistrict</td>
                 <td class="text-center"><span class="@item.EtatCssClass">@item.EtatText</span></td>
                 <td class="text-center">
@@ -88,30 +113,55 @@
                 <button type="button" style="@item.DisplayCrudButtons" class="btn btn-inverse-danger btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.idDistrict" data-name="@item.intitule"><i class="mdi mdi-delete"></i></button>
                 <button type="button" style="@item.DisplayCrudButtons" class="btn btn-inverse-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#validateModal" data-id="@item.idDistrict" data-name="@item.intitule"> <i class="mdi mdi-check"></i></button>
                 <button type="button" style="@item.DisplaySpecialValidation" class="btn btn-success btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#finalModal" data-id="@item.idDistrict" data-name="@item.intitule"> <i class="mdi mdi-check"></i></button>
-                <button type="button" style="@item.DisplayFinalValidation" class="btn btn-inverse-primary btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="@item.idDistrict" data-name="@item.intitule" data-geometry="@item.geometrie.ToText()" data-communes='@Json.Serialize(item.Communes)'><i class="mdi mdi-eye">@item.Communes.Count</i></button>
-              </td>
+                <button type="button" style="@item.DisplayFinalValidation" class="btn btn-inverse-primary btn-xs custom-width" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="@item.idDistrict" data-name="@item.intitule" data-pop="@item.totalPopulationDistrict" data-geometry="@item.geometrie.ToText()"><i class="mdi mdi-eye"></i></button>
+                <a asp-page-handler="ExportPdf" asp-route-id="@item.idDistrict" style="@item.DisplayFinalValidation" class="btn btn-inverse-secondary btn-xs custom-width"><i class="mdi mdi-file-pdf-box"></i></a></td>
             </tr>
-        }
-    </tbody>
-</table>
+          }
+      </tbody>
+  </table>
 
-<nav aria-label="Page navigation example" class="mt-3">
-    <ul class="pagination justify-content-end">
-        @if (Model.Districts.HasPreviousPage)
-        {
-            <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Districts.PageIndex - 1)">Précédent</a></li>
-        }
-        @if (Model.Districts.HasNextPage)
-        {
-            <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Districts.PageIndex + 1)">Suivant</a></li>
-        }
-    </ul>
-</nav>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <form method="get" class="d-flex align-items-center">
+      <div class="d-flex align-items-center"> 
+      <label for="pageSize" class="me-2">Afficher :</label> 
+      <select class="form-select d-inline-block w-auto"  id="pageSize"  name="PageSize" onchange="this.form.submit()">> 
+          <option value="1" selected="@(Model.PageSize == 1)">5</option>
+          <option value="15" selected="@(Model.PageSize == 15)">15</option>
+          <option value="101" selected="@(Model.PageSize == 101)">20</option>
+      </select> 
+      <span class="ms-2">par page</span>
+        <input type="number" id="customPageSize" name="PageSize" style="display:none;" min="1" max="100">
+      </div> 
+      <input type="hidden" name="pageIndex" value="1" />
+      <input type="hidden" name="SearchIntitule" value="@(Model.SearchIntitule)" />
+      <input type="hidden" name="SearchRegion" value="@(Model.SearchRegion)" />
+      <input type="hidden" name="MinPopulation" value="@(Model.MinPopulation)" />
+      <input type="hidden" name="MaxPopulation" value="@(Model.MaxPopulation)" />
+      <input type="hidden" name="Etat" value="@(Model.Etat)" />
+    </form>
+    <nav aria-label="Page navigation example" class="mt-3">
+        <ul class="pagination justify-content-end">
+        <li class="page-item disabled">
+                <span class="page-link">
+                    Page @Model.Districts.PageIndex / @Model.Districts.TotalPages
+                </span>
+            </li>
+            @if (Model.Districts.HasPreviousPage)
+            {
+              <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Districts.PageIndex - 1)">Précédent</a></li>
+            }
+            @if (Model.Districts.HasNextPage)
+            {
+              <li class="page-item"><a class="page-link" asp-route-pageIndex="@(Model.Districts.PageIndex + 1)">Suivant</a></li>
+            }
+        </ul>
+    </nav>
+  </div>
 
 }else { 
-    <p class="text-center text-muted fw-bold mt-3">
-    <i class="mdi mdi-alert-circle-outline"></i> Aucun district trouvé</p>
-     }
+  <p class="text-center text-muted fw-bold mt-3">
+  <i class="mdi mdi-alert-circle-outline"></i> Aucun district trouvé</p>
+}
 
 <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -142,7 +192,18 @@
         <button type="button" class="btn btn-secondary btn" data-bs-dismiss="modal">Annuler</button>
         <button type="submit" class="btn btn-primary btn" id="saveRegionBtn">Enregistrer</button>
       </div>
-      <div asp-validation-summary="All" class="text-danger"></div>
+      @if (!ViewData.ModelState.IsValid)
+      {
+          <div class="alert alert-danger d-flex flex-column align-items-center mx-auto text-center" role="alert" style="border-radius:8px; font-weight:500;  max-width:450px;">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <div>
+                  @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                  {
+                    <div >@error.ErrorMessage</div>
+                  }
+              </div>
+          </div>
+      }
     </form>
     </div>
   </div>
@@ -169,11 +230,11 @@
                     {
                         if (Model.District != null && item.idRegion == Model.District.IdRegion)
                         {
-                            <option value="@item.idRegion" selected>@item.intitule</option>
+                          <option value="@item.idRegion" selected>@item.intitule</option>
                         }
                         else
                         {
-                            <option value="@item.idRegion">@item.intitule</option>
+                          <option value="@item.idRegion">@item.intitule</option>
                         }
                     }
 
@@ -265,23 +326,35 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div id="map" style="height:400px;"></div>
+        <div id="map" style="height:400px; width:100%; position:relative;">
+        <div id="tooltip"></div>
+      </div>
       </div>
     </div>
   </div>
 </div>
 
 @section Scripts {
-    <script src="~/assets/js/ol.js"></script>
     <script src="~/assets/js/personal/district.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/assets/js/ol.js"></script>
     <script>console.log("OpenLayers version:", ol.VERSION);</script>
     <script>
-        $(document).ready(function () {
-            var showModal = '@ViewData["ShowCreateModal"]';
-            if (showModal === 'True') {
-                var myModal = new bootstrap.Modal(document.getElementById('createModal'));
-                myModal.show();
-            }
-        });
+          document.addEventListener("DOMContentLoaded", function () {
+        const toastEl = document.getElementById("liveToast");
+        if (toastEl) {
+            toastEl.classList.add("show");
+            setTimeout(() => toastEl.classList.remove("show"), 3000);
+        }
+    });
+    </script>
+    <script>
+      $(document).ready(function () {
+          var showModal = '@ViewData["ShowCreateModal"]';
+          if (showModal === 'True') {
+              var myModal = new bootstrap.Modal(document.getElementById('createModal'));
+              myModal.show();
+          }
+      });
     </script>
 }
